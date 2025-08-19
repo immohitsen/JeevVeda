@@ -1,153 +1,104 @@
 "use client"
-import { Activity, Calendar, FileText, Heart, Home, Settings, Stethoscope, User, LogOut } from "lucide-react"
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-} from "@/components/ui/sidebar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import Link from "next/link"
+import { Activity, FileText, Home, Settings, Stethoscope, Calendar, User, X, Users, Building2, CreditCard, Package, Clock, ChevronDown, MessageCircle, ActivitySquare, History, Shield, Scan, ClipboardList, UserCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useRouter, usePathname } from "next/navigation"
 
-// Navigation items
+// Medical navigation items matching the image
 const navigationItems = [
   {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: Home,
+    title: "Main Menu",
+    items: [
+      { icon: Home, label: "Dashboard", url: "/dashboard" },
+      { icon: MessageCircle, label: "Chatbot", url: "/dashboard/chatbot" },
+      { icon: Scan, label: "Screening Tools", url: "/dashboard/screening-tools" },
+      { icon: ClipboardList, label: "Reports", url: "/dashboard/reports" },
+      { icon: UserCircle, label: "Profile", url: "/dashboard/profile" },
+      { icon: Users, label: "Appointments", url: "/dashboard/appointments" },
+      { icon: Building2, label: "Patients", url: "/dashboard/patients" },
+    ]
   },
   {
-    title: "Blood Report Analyzer",
-    url: "/blood-analyzer",
-    icon: Activity,
+    title: "Medical Tools",
+    items: [
+      { icon: ActivitySquare, label: "Blood Analyzer", url: "/dashboard/blood-analyzer" },
+      { icon: History, label: "Report History", url: "/dashboard/report-history" },
+      { icon: Shield, label: "Screening Recs", url: "/dashboard/screening-recs" },
+    ]
   },
   {
-    title: "AI Symptom Checker",
-    url: "/symptom-checker",
-    icon: Stethoscope,
-  },
+    title: "Help",
+    items: [
+      { icon: Clock, label: "Help Center", url: "/dashboard/help" },
+    ]
+  }
+];
+
+const helpItems = [
   {
-    title: "Screening Recommendations",
-    url: "/screening-recs",
-    icon: Calendar,
-  },
-  {
-    title: "History & Reports",
-    url: "/report-history",
-    icon: FileText,
+    title: "Help Center",
+    url: "/dashboard/help",
+    icon: Clock,
   },
 ]
 
-const settingsItems = [
-  {
-    title: "Profile Settings",
-    url: "/settings/profile",
-    icon: User,
-  },
-  {
-    title: "Preferences",
-    url: "/settings/preferences",
-    icon: Settings,
-  },
-]
+interface AppSidebarProps {
+  onClose?: () => void
+}
 
-export function AppSidebar() {
+export function AppSidebar({ onClose }: AppSidebarProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const handleNavigation = (url: string) => {
+    router.push(url)
+    if (onClose) onClose()
+  }
+
+  const isActive = (path: string) => {
+    return pathname === path
+  }
+
   return (
-    <Sidebar className="border-r border-slate-200/60">
-      <SidebarHeader className="border-b border-slate-200/60 bg-white/50">
-        <div className="flex items-center gap-3 px-3 py-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
-            <Heart className="h-4 w-4" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-slate-900">CancerDetect Pro</span>
-            <span className="text-xs text-slate-500">Health Dashboard</span>
+    <aside className="w-[260px] bg-white flex flex-col">
+      {/* Header */}
+      <div className="bg-white">
+        <div className="flex items-center justify-between px-6 py-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 border border-purple-300">
+              <span className="text-xl font-bold text-purple-600">✚</span>
+            </div>
+            <div>
+              <span className="text-xl font-bold text-gray-900">Jeev Veda</span>
+            </div>
           </div>
         </div>
-      </SidebarHeader>
+      </div>
 
-      <SidebarContent className="bg-white/30">
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-slate-600 font-medium">Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="hover:bg-slate-100/80">
-                    <Link href={item.url} className="flex items-center gap-3">
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-6 pt-6 pb-4">
+        {/* Navigation Items */}
+        {navigationItems.map((section) => (
+          <div key={section.title} className="space-y-2 mb-8">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Main Menu</h3>
+            {section.items.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => handleNavigation(item.url)}
+                className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 text-base leading-relaxed text-gray-700 hover:text-black hover:bg-gray-100 rounded-xl transition-colors ${
+                  isActive(item.url) ? 'bg-black text-white hover:bg-gray-800' : ''
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon className="h-5 w-5" />
+                  <span className="font-medium">{item.label}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        ))}
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-slate-600 font-medium">Settings</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {settingsItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="hover:bg-slate-100/80">
-                    <Link href={item.url} className="flex items-center gap-3">
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter className="border-t border-slate-200/60 bg-white/50">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="w-full hover:bg-slate-100/80">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src="/placeholder.svg" alt="Sarah Johnson" />
-                    <AvatarFallback className="bg-slate-200 text-slate-700 text-xs">SJ</AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col items-start text-left">
-                    <span className="text-sm font-medium text-slate-900">Sarah Johnson</span>
-                    <span className="text-xs text-slate-500">Patient ID: PT-2024-001</span>
-                  </div>
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
-                <DropdownMenuItem>
-                  <User className="h-4 w-4 mr-2" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="h-4 w-4 mr-2" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-red-600">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  <span>Sign out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-      <SidebarRail />
-    </Sidebar>
+      </nav>
+    </aside>
   )
 }
