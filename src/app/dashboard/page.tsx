@@ -1,231 +1,373 @@
-import { Search, Plus, Mail, Bell, Settings, MoreHorizontal, TrendingUp, TrendingDown, Calendar, Users, Bed, FileText, X, Maximize2 } from "lucide-react"
+"use client"
+
+import { useUser } from "@/hooks/useUser"
+import { useRouter } from "next/navigation"
+import { BrutalButton } from "@/components/ui/brutal-button"
+import { 
+  Activity, 
+  Scan, 
+  MessageSquare, 
+  FileText, 
+  Calendar,
+  Heart,
+  Wind,
+  Brain,
+  Shield,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  ArrowRight,
+  Zap,
+  Target
+} from "lucide-react"
+import { useState, useEffect } from "react"
 
 export default function Dashboard() {
+  const { user, loading } = useUser()
+  const router = useRouter()
+  const [currentTime, setCurrentTime] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const recentReports = [
+    {
+      id: "RPT-001",
+      type: "Blood Analysis",
+      date: "2025-01-15",
+      status: "Normal",
+      riskLevel: "Low",
+      icon: Activity,
+      color: "green"
+    },
+    {
+      id: "RPT-002", 
+      type: "Lung Screening",
+      date: "2025-01-10",
+      status: "Review Required",
+      riskLevel: "Medium",
+      icon: Wind,
+      color: "yellow"
+    },
+    {
+      id: "RPT-003",
+      type: "Cancer Risk Assessment", 
+      date: "2025-01-05",
+      status: "Completed",
+      riskLevel: "Low",
+      icon: Shield,
+      color: "green"
+    }
+  ]
+
+  const healthMetrics = {
+    overallRisk: "Low",
+    lastScreening: "15 days ago",
+    upcomingAppointments: 2,
+    reportsGenerated: 12
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-lg font-mono">Loading your health dashboard...</div>
+      </div>
+    )
+  }
+
   return (
-    <div className="p-8 space-y-8">
-      {/* Main Dashboard Title */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Medical Dashboard</h1>
-        <p className="text-base leading-relaxed text-gray-600">Overview of patient health, appointments, and revenue metrics</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden bg-white">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-green-50 opacity-60"></div>
+        <div className="relative px-8 py-12">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              
+              {/* Left: Welcome & User Info */}
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-mono text-gray-600 uppercase tracking-wide">
+                      {currentTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                    </span>
+                  </div>
+                  <h1 className="text-5xl font-bold leading-tight">
+                    <span className="text-gray-900">Good {currentTime.getHours() < 12 ? 'morning' : currentTime.getHours() < 18 ? 'afternoon' : 'evening'},</span>
+                    <br />
+                    <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                      {user?.fullName || 'Health Warrior'}
+                    </span>
+                  </h1>
+                  <p className="text-xl text-gray-600 font-light leading-relaxed">
+                    Your personalized cancer screening and health analysis dashboard is ready. 
+                    Stay ahead of your health journey with AI-powered insights.
+                  </p>
+                </div>
+
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <Shield className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-gray-900">{healthMetrics.overallRisk}</p>
+                        <p className="text-sm text-gray-600">Overall Risk</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-gray-900">{healthMetrics.reportsGenerated}</p>
+                        <p className="text-sm text-gray-600">Reports Generated</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Medical Visualization */}
+              <div className="relative">
+                <div className="relative w-full h-96 bg-gradient-to-br from-blue-100 to-green-100 rounded-3xl overflow-hidden">
+                  {/* Animated lung visualization */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="relative">
+                      {/* Main lung structure */}
+                      <div className="w-64 h-64 relative">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-300/30 to-green-300/30 rounded-full"></div>
+                        
+                        {/* Left lung */}
+                        <div className="absolute top-12 left-8 w-24 h-32 bg-gradient-to-br from-blue-400/40 to-blue-300/30 rounded-full animate-pulse"></div>
+                        
+                        {/* Right lung */}
+                        <div className="absolute top-12 right-8 w-24 h-32 bg-gradient-to-br from-green-400/40 to-green-300/30 rounded-full animate-pulse"></div>
+                        
+                        {/* Heart */}
+                        <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-red-300/40 rounded-full animate-bounce"></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Floating health indicators */}
+                  <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-sm rounded-xl p-3">
+                    <div className="flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-red-500" />
+                      <span className="text-sm font-semibold">72 BPM</span>
+                    </div>
+                  </div>
+                  
+                  <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-sm rounded-xl p-3">
+                    <div className="flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-blue-500" />
+                      <span className="text-sm font-semibold">Healthy Range</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Top Row of Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total Patients Card */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 relative">
-          <div className="absolute top-4 right-4">
-            <MoreHorizontal className="w-4 h-4 text-gray-400" />
+      {/* Quick Actions */}
+      <div className="px-8 py-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Your Health Command Center</h2>
+            <p className="text-lg text-gray-600">One-click access to powerful health analysis tools</p>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Users className="w-6 h-6 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-base leading-relaxed text-gray-600">Total Patients</p>
-              <div className="flex items-center gap-2 mt-1">
-                <TrendingUp className="w-4 h-4 text-green-500" />
-                <span className="text-green-500 text-sm font-medium">+2.1%</span>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            
+            {/* Blood Analyzer */}
+            <div className="group relative bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-pink-50 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative space-y-6">
+                <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Activity className="w-8 h-8 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Blood Analyzer</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">Upload your blood reports for AI-powered cancer risk assessment and health insights</p>
+                </div>
+                <BrutalButton 
+                  variant="danger" 
+                  onClick={() => router.push('/dashboard/blood-analyzer')}
+                  className="w-full justify-center group-hover:translate-x-1 group-hover:translate-y-1"
+                >
+                  <span>Analyze Now</span>
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </BrutalButton>
               </div>
-              <p className="text-xs text-gray-500 mt-1">150 more than Yesterday</p>
             </div>
-          </div>
-        </div>
 
-        {/* Appointments Card */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 relative">
-          <div className="absolute top-4 right-4">
-            <MoreHorizontal className="w-4 h-4 text-gray-400" />
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-base leading-relaxed text-gray-600">Appointments</p>
-              <div className="flex items-center gap-2 mt-1">
-                <TrendingDown className="w-4 h-4 text-red-500" />
-                <span className="text-red-500 text-sm font-medium">-1.5%</span>
+            {/* Screening Tools */}
+            <div className="group relative bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative space-y-6">
+                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Scan className="w-8 h-8 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Screening Tools</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">Access comprehensive cancer screening tools and early detection systems</p>
+                </div>
+                <BrutalButton 
+                  variant="secondary" 
+                  onClick={() => router.push('/dashboard/screening-tools')}
+                  className="w-full justify-center group-hover:translate-x-1 group-hover:translate-y-1 "
+                >
+                  <span>Start Screening</span>
+                  <Target className="w-4 h-4 ml-2" />
+                </BrutalButton>
               </div>
-              <p className="text-xs text-gray-500 mt-1">15 more than Yesterday</p>
             </div>
-          </div>
-        </div>
 
-        {/* Bed Room Card */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 relative">
-          <div className="absolute top-4 right-4">
-            <MoreHorizontal className="w-4 h-4 text-gray-400" />
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <Bed className="w-6 h-6 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-base leading-relaxed text-gray-600">Bed Room</p>
-              <div className="flex items-center gap-2 mt-1">
-                <TrendingUp className="w-4 h-4 text-green-500" />
-                <span className="text-green-500 text-sm font-medium">+2.1%</span>
+            {/* AI Chatbot */}
+            <div className="group relative bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative space-y-6">
+                <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <MessageSquare className="w-8 h-8 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Health Assistant</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">Chat with our AI health assistant for personalized health guidance and risk assessment</p>
+                </div>
+                <BrutalButton 
+                  variant="success" 
+                  onClick={() => router.push('/dashboard/chatbot')}
+                  className="w-full justify-center group-hover:translate-x-1 group-hover:translate-y-1"
+                >
+                  <span>Chat Now</span>
+                  <Zap className="w-4 h-4 ml-2" />
+                </BrutalButton>
               </div>
-              <p className="text-xs text-gray-500 mt-1">260 more than Yesterday</p>
             </div>
-          </div>
-        </div>
 
-        {/* Total Invoice Card */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 relative">
-          <div className="absolute top-4 right-4">
-            <MoreHorizontal className="w-4 h-4 text-gray-400" />
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <FileText className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-base leading-relaxed text-gray-600">Total Invoice</p>
-              <div className="flex items-center gap-2 mt-1">
-                <TrendingUp className="w-4 h-4 text-green-500" />
-                <span className="text-green-500 text-sm font-medium">+2.1%</span>
+            {/* Reports Hub */}
+            <div className="group relative bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative space-y-6">
+                <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <FileText className="w-8 h-8 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Reports Hub</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">View, download, and manage all your health reports and analysis history</p>
+                </div>
+                <BrutalButton 
+                  variant="ghost" 
+                  onClick={() => router.push('/dashboard/reports')}
+                  className="w-full justify-center group-hover:translate-x-1 group-hover:translate-y-1 border-purple-300 hover:bg-purple-50"
+                >
+                  <span>View Reports</span>
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </BrutalButton>
               </div>
-              <p className="text-xs text-gray-500 mt-1">1050 more than Yesterday</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Patient Health Section */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-900">Patient Health</h2>
-            <p className="text-base leading-relaxed text-gray-600">From Patient</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">K</span>
-            <MoreHorizontal className="w-4 h-4 text-gray-400" />
-          </div>
-        </div>
-
-        <div className="relative">
-          {/* Lung Visualization Background */}
-          <div className="w-full h-80 bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl relative overflow-hidden">
-            {/* Simplified lung-like shape */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-64 h-64 bg-gradient-to-br from-purple-200/30 to-blue-200/30 rounded-full relative">
-                {/* Lung lobes */}
-                <div className="absolute top-8 left-8 w-20 h-24 bg-purple-300/40 rounded-full"></div>
-                <div className="absolute top-8 right-8 w-20 h-24 bg-blue-300/40 rounded-full"></div>
-                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-16 h-20 bg-purple-200/40 rounded-full"></div>
+      {/* Recent Reports Table */}
+      <div className="px-8 pb-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="p-8 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">Recent Health Reports</h3>
+                  <p className="text-gray-600 mt-2">Track your health journey with detailed analysis reports</p>
+                </div>
+                <BrutalButton variant="ghost" onClick={() => router.push('/dashboard/report-history')}>
+                  View All Reports
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </BrutalButton>
               </div>
             </div>
             
-            {/* Heart rate indicator */}
-            <div className="absolute top-8 right-8 flex items-center gap-2 bg-white/80 backdrop-blur-sm px-3 py-2 rounded-lg">
-              <span className="text-sm font-medium text-gray-700">108 bpm</span>
-              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className="text-left p-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Report ID</th>
+                    <th className="text-left p-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Type</th>
+                    <th className="text-left p-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Date</th>
+                    <th className="text-left p-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Status</th>
+                    <th className="text-left p-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Risk Level</th>
+                    <th className="text-left p-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {recentReports.map((report, index) => (
+                    <tr key={report.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="p-6">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                            report.color === 'green' ? 'bg-green-100' : 
+                            report.color === 'yellow' ? 'bg-yellow-100' : 'bg-red-100'
+                          }`}>
+                            <report.icon className={`w-5 h-5 ${
+                              report.color === 'green' ? 'text-green-600' :
+                              report.color === 'yellow' ? 'text-yellow-600' : 'text-red-600'
+                            }`} />
+                          </div>
+                          <span className="font-mono font-medium text-gray-900">{report.id}</span>
+                        </div>
+                      </td>
+                      <td className="p-6">
+                        <span className="font-medium text-gray-900">{report.type}</span>
+                      </td>
+                      <td className="p-6">
+                        <span className="text-gray-600">{new Date(report.date).toLocaleDateString()}</span>
+                      </td>
+                      <td className="p-6">
+                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
+                          report.status === 'Normal' || report.status === 'Completed' ? 'bg-green-100 text-green-700' :
+                          report.status === 'Review Required' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {report.status === 'Normal' || report.status === 'Completed' ? 
+                            <CheckCircle className="w-3 h-3" /> : 
+                            report.status === 'Review Required' ? 
+                            <AlertTriangle className="w-3 h-3" /> : 
+                            <AlertTriangle className="w-3 h-3" />
+                          }
+                          {report.status}
+                        </span>
+                      </td>
+                      <td className="p-6">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                          report.riskLevel === 'Low' ? 'bg-green-100 text-green-700' :
+                          report.riskLevel === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {report.riskLevel}
+                        </span>
+                      </td>
+                      <td className="p-6">
+                        <BrutalButton variant="ghost" size="sm">
+                          View Details
+                        </BrutalButton>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
-
-          {/* Overlaid Cards */}
-          <div className="absolute top-8 left-8">
-            {/* Appointment Card */}
-            <div className="bg-white rounded-lg p-4 shadow-lg border border-gray-100 w-64">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-purple-600">ID</span>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Dr. Ishita Datta</p>
-                  <p className="text-sm text-gray-600">Pulmonary</p>
-                </div>
-              </div>
-              <div className="bg-purple-50 rounded-lg p-3">
-                <p className="text-sm font-medium text-purple-900">Today</p>
-                <p className="text-xs text-purple-700">01:15 PM - 02:00 PM</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="absolute top-8 right-8">
-            {/* Vitals Card */}
-            <div className="bg-white rounded-lg p-4 shadow-lg border border-gray-100 w-64">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium text-blue-600">JH</span>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Jeffrey Hessel</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button className="p-1 hover:bg-gray-100 rounded">
-                    <X className="w-4 h-4 text-gray-400" />
-                  </button>
-                  <button className="p-1 hover:bg-gray-100 rounded">
-                    <Maximize2 className="w-4 h-4 text-gray-400" />
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Temperature</span>
-                  <span className="font-medium">45.06° C</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Heart rate</span>
-                  <span className="font-medium">108 bpm</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Blood</span>
-                  <span className="font-medium">96%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Total Revenue Section */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-900">Total Revenue</h2>
-            <p className="text-base leading-relaxed text-gray-600">01.07.2025</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-              <option>Monthly</option>
-            </select>
-            <div className="flex bg-gray-100 rounded-lg p-1">
-              <button className="px-4 py-2 text-sm font-medium bg-gray-300 text-gray-700 rounded-md">Expense</button>
-              <button className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900">Income</button>
-            </div>
-          </div>
-        </div>
-
-        {/* Chart Area */}
-        <div className="h-64 bg-gray-50 rounded-lg p-4 mb-6">
-          {/* Simplified line chart */}
-          <div className="h-full flex items-end justify-between">
-            {['Jan', 'Apr', 'May', 'Jun', 'Jul', 'Sep', 'Dec'].map((month, index) => (
-              <div key={month} className="flex flex-col items-center">
-                <div className="w-16 h-32 bg-gradient-to-t from-purple-200 to-transparent rounded-t-lg mb-2"></div>
-                <div className="w-16 h-24 bg-gradient-to-t from-green-200 to-transparent rounded-t-lg mb-2"></div>
-                <span className="text-xs text-gray-600">{month}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Summary Figures */}
-        <div className="flex gap-8">
-          <div>
-            <p className="text-base leading-relaxed text-gray-600">Hospital total Income</p>
-            <p className="text-lg font-semibold text-gray-900">$ 7,12,3264</p>
-          </div>
-          <div>
-            <p className="text-base leading-relaxed text-gray-600">Hospital total Expense</p>
-            <p className="text-lg font-semibold text-gray-900">$ 14,965,5476</p>
           </div>
         </div>
       </div>

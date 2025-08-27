@@ -9,7 +9,8 @@ import {
 } from '@/lib/types';
 
 // Use a dummy API key ONLY for local testing if the environment variable is not set
-const apiKey = process.env.GEMINI_API_KEY ;
+const apiKey = process.env.GEMINI_API_KEY || 'dummy_api_key_for_testing';
+console.log(`Using API key: ${apiKey === 'dummy_api_key_for_testing' ? 'DUMMY KEY (fallback mode)' : 'Valid Key'}`);
 const genAI = new GoogleGenAI({ apiKey });
 
 // Simplified required fields for a better user experience
@@ -69,6 +70,7 @@ export async function POST(req: NextRequest) {
 
     // Fallback mock mode
     if (apiKey === 'dummy_api_key_for_testing') {
+      const lastUserMessage = history[history.length - 1]?.content || "";
       return createMockAIResponse(nextQuestionKey, lastUserMessage);
     }
 
@@ -86,9 +88,11 @@ export async function POST(req: NextRequest) {
       - Keep the question short and human, not robotic.
       - Use simple language (avoid medical jargon).
       - Support both metric and imperial units.
-      - Output ONLY valid JSON. No markdown, no explanations.
+      - You MUST output ONLY valid JSON. No markdown, no explanations, no text before or after the JSON.
+      - Do NOT wrap your response in code blocks or backticks.
+      - Your entire response must be parseable as a single JSON object.
 
-      JSON format:
+      CRITICAL: Your response MUST be in this EXACT JSON format and nothing else:
       {
         "reply": "Next natural question about the next missing field",
         "extractedData": {
@@ -110,13 +114,39 @@ export async function POST(req: NextRequest) {
       ...geminiHistory
     ];
 
+    // Generate content with the model directly
     const result = await genAI.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: fullContents, 
+      contents: fullContents,
     });
     
     const aiResponseText = result.text || '{}';
-    const parsedResponse = JSON.parse(aiResponseText);
+    
+    // Clean the response text to ensure it's valid JSON
+    let cleanedResponse = aiResponseText.trim();
+    // Remove markdown code block markers if present
+    if (cleanedResponse.startsWith("```json")) {
+      cleanedResponse = cleanedResponse.replace(/^```json\s*/, "").replace(/```\s*$/, "");
+    } else if (cleanedResponse.startsWith("```")) {
+      cleanedResponse = cleanedResponse.replace(/^```\s*/, "").replace(/```\s*$/, "");
+    }
+    
+    console.log("Cleaned AI response:", cleanedResponse);
+    
+    let parsedResponse;
+    try {
+      parsedResponse = JSON.parse(cleanedResponse);
+    } catch (parseError) {
+      console.error("Failed to parse AI response:", parseError);
+      console.log("Raw response:", aiResponseText);
+      
+      // Fallback to a simple response
+      return NextResponse.json({
+        reply: "I'm having trouble understanding my own thoughts right now. Let's try again. Could you please repeat your last question?",
+        extractedData: {},
+        isComplete: false
+      });
+    }
 
     // Validate and normalize extracted data
     const extractedData = parsedResponse.extractedData || {};
@@ -147,9 +177,38 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     console.error('Chat API Error:', error);
+    
+    // Handle different error types
     if (error instanceof ZodError) {
       return NextResponse.json({ error: 'Invalid request data format', details: error.issues }, { status: 400 });
     }
+    
+    // Handle JSON parsing errors
+    if (error instanceof SyntaxError && error.message.includes('JSON')) {
+      console.error('JSON parsing error:', error.message);
+      return NextResponse.json({ 
+        reply: "I received an invalid response format. Let's try again with a simpler question.",
+        extractedData: {},
+        isComplete: false
+      }, { status: 500 });
+    }
+    
+    // Handle network or API errors
+    if (error instanceof Error) {
+      console.error(`API Error: ${error.name}: ${error.message}`);
+      
+      // If using dummy key, switch to mock mode
+      if (apiKey === 'dummy_api_key_for_testing') {
+        console.log('Switching to mock mode due to error with dummy key');
+        // Default to asking about age if we can't determine the next field
+        const nextField = 'age';
+        const lastMsg = Array.isArray(history) && history.length > 0 ? 
+          history[history.length - 1]?.content || "" : "";
+        return createMockAIResponse(nextField, lastMsg);
+      }
+    }
+    
+    // Generic fallback
     return NextResponse.json({ 
       reply: "I'm sorry, I'm having a little trouble connecting right now. Could you please try again?",
       extractedData: {},

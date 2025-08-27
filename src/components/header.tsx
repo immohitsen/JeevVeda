@@ -2,6 +2,7 @@
 
 import { Menu, Search, Plus, Mail, Bell, Settings, ChevronDown, User as UserIcon, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { BrutalButton } from "@/components/ui/brutal-button"
 import { useUser } from "@/hooks/useUser"
 import { useRouter } from "next/navigation"
 import { useState, useRef, useEffect } from "react"
@@ -75,35 +76,35 @@ export function Header({ title = "Dashboard", onMenuClick }: HeaderProps) {
       <div className="flex items-center gap-4">
         {/* Search Bar */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600" />
           <input
             type="text"
             placeholder="Search here"
-            className="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-lg text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="pl-10 pr-4 py-2 w-64 border-2 border-black font-mono text-sm bg-white focus:outline-none focus:bg-yellow-100 transition-colors"
           />
         </div>
 
         {/* Add Button */}
-        <Button className="bg-black text-white hover:bg-gray-800 px-4 py-2 rounded-lg text-base leading-relaxed">
+        <BrutalButton variant="secondary" size="md">
           <Plus className="w-4 h-4 mr-2" />
           Add
           <ChevronDown className="w-4 h-4 ml-2" />
-        </Button>
+        </BrutalButton>
 
         {/* Notification Icons */}
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-            <Mail className="h-5 w-5" />
+        <div className="flex items-center gap-2">
+          <BrutalButton variant="ghost" size="sm">
+            <Mail className="h-4 w-4" />
             <span className="sr-only">Mail</span>
-          </Button>
-          <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-            <Bell className="h-5 w-5" />
+          </BrutalButton>
+          <BrutalButton variant="ghost" size="sm">
+            <Bell className="h-4 w-4" />
             <span className="sr-only">Notifications</span>
-          </Button>
-          <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-            <Settings className="h-5 w-5" />
+          </BrutalButton>
+          <BrutalButton variant="ghost" size="sm">
+            <Settings className="h-4 w-4" />
             <span className="sr-only">Settings</span>
-          </Button>
+          </BrutalButton>
         </div>
 
         {/* User Profile */}
@@ -155,21 +156,27 @@ export function Header({ title = "Dashboard", onMenuClick }: HeaderProps) {
 
           {/* Dropdown Menu */}
           {isDropdownOpen && isAuthenticated && user && (
-            <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-              <button
-                onClick={goToProfile}
-                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-              >
-                <UserIcon className="w-4 h-4" />
-                View Profile
-              </button>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
+            <div className="absolute right-0 top-full mt-2 w-48 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] py-2 z-50">
+              <div className="px-2 space-y-2">
+                <BrutalButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={goToProfile}
+                  className="w-full justify-start gap-3"
+                >
+                  <UserIcon className="w-4 h-4" />
+                  View Profile
+                </BrutalButton>
+                <BrutalButton
+                  variant="danger"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="w-full justify-start gap-3"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </BrutalButton>
+              </div>
             </div>
           )}
         </div>

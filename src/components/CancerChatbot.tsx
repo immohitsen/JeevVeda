@@ -131,7 +131,11 @@ export default function CancerChatbot() {
     setIsLoading(true);
 
     try {
-      // The API payload is now simpler, without the 'sentiment' key.
+      console.log('Sending request to API with:', {
+        history: newMessagesForApi.map(msg => ({ role: msg.role, content: msg.content })),
+        userResponses: userResponses,
+      });
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -142,9 +146,11 @@ export default function CancerChatbot() {
       });
 
       console.log('API response status:', response.status);
+      console.log('API response headers:', response.headers);
       
       if (!response.ok) {
-        console.error('API call failed with status:', response.status);
+        const errorText = await response.text();
+        console.error('API call failed with status:', response.status, 'Error:', errorText);
         throw new Error(`API call failed with status: ${response.status}`);
       }
 
@@ -246,54 +252,112 @@ export default function CancerChatbot() {
     }, 2000);
   };
 
-  // --- JSX (No changes needed in the UI structure) ---
   return (
-    <div className="bg-white h-[85vh] flex flex-col">
-      {/* Header, Tabs, Chat View, Results View, and Input Area JSX remains the same */}
-       <div className="bg-gradient-to-r from-slate-800 to-slate-700 text-white p-8 flex-shrink-0">
-         <div className="flex items-center gap-4">
-           <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
-               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-               </svg>
-           </div>
-           <div>
-             <h1 className="text-3xl font-bold">Your Health Companion</h1>
-             <p className="text-base leading-relaxed text-slate-200 mt-1">Personalized insights to help you stay proactive about your health.</p>
-           </div>
-         </div>
-       </div>
-       
-       {assessmentComplete && (
-         <div className="flex border-b border-gray-200 bg-white flex-shrink-0">
-           <button onClick={() => setActiveTab('chat')} className={`px-6 py-4 font-semibold text-sm transition-colors duration-200 ${activeTab === 'chat' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-blue-600'}`}>
-             Chat History
-           </button>
-           <button onClick={() => setActiveTab('results')} className={`px-6 py-4 font-semibold text-sm transition-colors duration-200 ${activeTab === 'results' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-blue-600'}`}>
-             Assessment Report
-           </button>
-         </div>
-       )}
+    <div className="bg-white h-full flex flex-col">
+      {/* Sticky Header - Stays at top of content area */}
+      <div className="sticky top-0 bg-white border-b border-gray-100 z-20">
+        {/* Chatbot Header */}
+        <div className="px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Health Assistant</h1>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <p className="text-sm text-gray-600">AI-powered health screening • Private & Secure</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-       <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50">
-         {activeTab === 'chat' && (
-             <div className="p-6 space-y-6">
-             {messages.map((message, index) => (
-               <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                 <div className={`max-w-2xl px-6 py-4 ${ message.role === 'user' ? 'bg-blue-600 text-white rounded-2xl rounded-br-md shadow-lg' : 'bg-white text-gray-800 rounded-2xl rounded-bl-md shadow-lg border border-gray-100'}`}>
-                     <p className="text-base leading-relaxed">{message.content}</p>
+        {/* Tab Navigation - only show when assessment is complete */}
+        {assessmentComplete && (
+          <div className="flex border-b border-gray-100 bg-gray-50">
+            <button 
+              onClick={() => setActiveTab('chat')} 
+              className={`px-6 py-4 font-medium text-sm transition-colors duration-200 ${
+                activeTab === 'chat' 
+                  ? 'border-b-2 border-green-500 text-green-600 bg-white' 
+                  : 'text-gray-600 hover:text-green-600 hover:bg-white'
+              }`}
+            >
+              💬 Chat
+            </button>
+            <button 
+              onClick={() => setActiveTab('results')} 
+              className={`px-6 py-4 font-medium text-sm transition-colors duration-200 ${
+                activeTab === 'results' 
+                  ? 'border-b-2 border-green-500 text-green-600 bg-white' 
+                  : 'text-gray-600 hover:text-green-600 hover:bg-white'
+              }`}
+            >
+              📊 Report
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Scrollable Content Area - This will scroll */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Chat Tab Content */}
+        {activeTab === 'chat' && (
+          <div className="bg-gray-50 relative">
+            <div className="p-4 space-y-4">
+              {messages.map((message, index) => (
+               <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}>
+                 {message.role === 'assistant' && (
+                   <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center flex-shrink-0 mb-1">
+                     <span className="text-xs font-bold text-white">AI</span>
+                   </div>
+                 )}
+                 <div className={`max-w-lg px-3 py-2 ${ 
+                   message.role === 'user' 
+                     ? 'bg-green-500 text-white rounded-2xl rounded-br-md shadow-sm' 
+                     : 'bg-white text-gray-800 rounded-2xl rounded-bl-md shadow-sm border border-gray-200'
+                 }`}>
+                     <p className="text-sm leading-relaxed">{message.content}</p>
+                     <div className="mt-1">
+                       <span className="text-xs opacity-60">
+                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                       </span>
+                     </div>
                  </div>
+                 {message.role === 'user' && (
+                   <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0 mb-1">
+                     <span className="text-xs font-bold text-gray-600">You</span>
+                   </div>
+                 )}
                </div>
              ))}
              {isLoading && !assessmentComplete && (
-               <div className="flex justify-start"> <div className="bg-white text-gray-800 max-w-2xl px-6 py-4 rounded-2xl rounded-bl-md shadow-lg border border-gray-100"> <div className="flex items-center space-x-2"> <div className="flex space-x-1"> <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div> <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div> <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div> </div> <span className="text-base font-medium">Got it, thinking...</span> </div> </div> </div>
-             )}
-             <div ref={messagesEndRef} />
-           </div>
-         )}
+               <div className="flex justify-start items-end gap-2">
+                 <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center flex-shrink-0 mb-1">
+                   <span className="text-xs font-bold text-white">AI</span>
+                 </div>
+                 <div className="bg-white text-gray-800 max-w-sm px-3 py-2 rounded-2xl rounded-bl-md shadow-sm border border-gray-200">
+                   <div className="flex items-center space-x-2">
+                     <div className="flex space-x-1">
+                       <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-bounce"></div>
+                       <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                       <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                     </div>
+                     <span className="text-sm text-gray-600">Thinking...</span>
+                   </div>
+                 </div>
+               </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+        )}
 
-                  {activeTab === 'results' && riskAssessment && (
-          <div className="p-8 bg-gradient-to-br from-slate-50 to-white">
+        {/* Results Tab Content */}
+        {activeTab === 'results' && riskAssessment && (
+          <div className="bg-gradient-to-br from-slate-50 to-white p-8">
             <div className="max-w-6xl mx-auto">
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">Your Health Assessment Report</h2>
@@ -378,31 +442,40 @@ export default function CancerChatbot() {
             </div>
           </div>
         )}
-       </div>
+      </div>
 
-       {!assessmentComplete && (
-         <div className="border-t border-gray-100 p-6 bg-white flex-shrink-0">
-           <div className="flex items-end gap-4">
-             <textarea
-               value={currentInput}
-               onChange={(e) => setCurrentInput(e.target.value)}
-               onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(currentInput); }}}
-               placeholder="Type your response here..."
-               className="w-full border border-gray-200 rounded-2xl px-6 py-4 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 resize-none"
-               rows={1}
-               disabled={isLoading}
-             />
-             <button
-               onClick={() => handleSendMessage(currentInput)}
-               disabled={isLoading || !currentInput.trim()}
-               className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-2xl hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl disabled:shadow-none flex items-center gap-2"
-             >
-               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-               Send
-             </button>
+      {/* Fixed Input Area - At bottom when assessment not complete */}
+      {!assessmentComplete && (
+        <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 p-4 bg-white shadow-lg w-full z-30">
+           <div className="max-w-4xl mx-auto">
+             <div className="flex items-center gap-3">
+               <div className="flex-1 relative">
+                 <textarea
+                   value={currentInput}
+                   onChange={(e) => setCurrentInput(e.target.value)}
+                   onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(currentInput); }}}
+                   placeholder="Message Health Assistant..."
+                   className="w-full border border-gray-300 rounded-3xl px-4 py-3 pr-12 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100 resize-none text-sm bg-gray-50 focus:bg-white transition-colors"
+                   rows={1}
+                   disabled={isLoading}
+                 />
+                 <button
+                   onClick={() => handleSendMessage(currentInput)}
+                   disabled={isLoading || !currentInput.trim()}
+                   className="absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-gradient-to-r from-green-400 to-emerald-500 text-white rounded-full hover:from-green-500 hover:to-emerald-600 disabled:from-gray-300 disabled:to-gray-400 transition-all duration-200 flex items-center justify-center shadow-sm hover:shadow-md"
+                 >
+                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                   </svg>
+                 </button>
+               </div>
+             </div>
+             <div className="mt-2 px-1">
+               <p className="text-xs text-gray-400 text-center">💬 AI can make mistakes. Your data is private and secure.</p>
+             </div>
            </div>
-         </div>
-       )}
+        </div>
+      )}
     </div>
   );
 }
