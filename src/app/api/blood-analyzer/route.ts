@@ -186,7 +186,7 @@ Return this exact JSON structure:
 }`;
 
     const ai = await genAI.models.generateContent({
-      model: 'gemini-2.5-pro',
+      model: 'gemini-2.5-flash',
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
     });
 

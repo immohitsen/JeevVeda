@@ -84,34 +84,34 @@ export default function Dashboard() {
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-white">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-green-50 opacity-60"></div>
-        <div className="relative px-8 py-12">
+        <div className="relative px-4 sm:px-6 md:px-8 py-8 sm:py-12">
           <div className="max-w-7xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
               
               {/* Left: Welcome & User Info */}
-              <div className="space-y-8">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-mono text-gray-600 uppercase tracking-wide">
+              <div className="space-y-6 sm:space-y-8">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="text-xs sm:text-sm font-mono text-gray-600 uppercase tracking-wide">
                       {currentTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                     </span>
                   </div>
-                  <h1 className="text-5xl font-bold leading-tight">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
                     <span className="text-gray-900">Good {currentTime.getHours() < 12 ? 'morning' : currentTime.getHours() < 18 ? 'afternoon' : 'evening'},</span>
                     <br />
                     <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
                       {user?.fullName || 'Health Warrior'}
                     </span>
                   </h1>
-                  <p className="text-xl text-gray-600 font-light leading-relaxed">
+                  <p className="text-base sm:text-lg md:text-xl text-gray-600 font-light leading-relaxed">
                     Your personalized cancer screening and health analysis dashboard is ready. 
                     Stay ahead of your health journey with AI-powered insights.
                   </p>
                 </div>
 
                 {/* Quick Stats */}
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -182,19 +182,19 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="px-8 py-12">
+      <div className="px-4 sm:px-6 md:px-8 py-8 sm:py-12">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Your Health Command Center</h2>
-            <p className="text-lg text-gray-600">One-click access to powerful health analysis tools</p>
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Your Health Command Center</h2>
+            <p className="text-sm sm:text-base md:text-lg text-gray-600">One-click access to powerful health analysis tools</p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             
             {/* Blood Analyzer */}
-            <div className="group relative bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
+            <div className="group relative bg-white p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
               <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-pink-50 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative space-y-6">
+              <div className="relative space-y-4 sm:space-y-6">
                 <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Activity className="w-8 h-8 text-red-600" />
                 </div>
@@ -214,9 +214,9 @@ export default function Dashboard() {
             </div>
 
             {/* Screening Tools */}
-            <div className="group relative bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
+            <div className="group relative bg-white p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative space-y-6">
+              <div className="relative space-y-4 sm:space-y-6">
                 <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Scan className="w-8 h-8 text-blue-600" />
                 </div>
@@ -236,9 +236,9 @@ export default function Dashboard() {
             </div>
 
             {/* AI Chatbot */}
-            <div className="group relative bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
+            <div className="group relative bg-white p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
               <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative space-y-6">
+              <div className="relative space-y-4 sm:space-y-6">
                 <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                   <MessageSquare className="w-8 h-8 text-green-600" />
                 </div>
@@ -258,9 +258,9 @@ export default function Dashboard() {
             </div>
 
             {/* Reports Hub */}
-            <div className="group relative bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
+            <div className="group relative bg-white p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative space-y-6">
+              <div className="relative space-y-4 sm:space-y-6">
                 <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                   <FileText className="w-8 h-8 text-purple-600" />
                 </div>
@@ -283,16 +283,16 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Reports Table */}
-      <div className="px-8 pb-12">
+      <div className="px-4 sm:px-6 md:px-8 pb-8 sm:pb-12">
         <div className="max-w-7xl mx-auto">
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="p-8 border-b border-gray-100">
-              <div className="flex items-center justify-between">
+            <div className="p-4 sm:p-6 md:p-8 border-b border-gray-100">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">Recent Health Reports</h3>
-                  <p className="text-gray-600 mt-2">Track your health journey with detailed analysis reports</p>
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Recent Health Reports</h3>
+                  <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Track your health journey with detailed analysis reports</p>
                 </div>
-                <BrutalButton variant="ghost" onClick={() => router.push('/dashboard/report-history')}>
+                <BrutalButton variant="ghost" onClick={() => router.push('/dashboard/report-history')} className="w-full sm:w-auto">
                   View All Reports
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </BrutalButton>

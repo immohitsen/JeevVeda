@@ -10,16 +10,16 @@ export default function Home() {
       {/* Header Navigation */}
       <header className="w-full py-4 px-4 md:px-8">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="font-mono text-lg font-bold">Jeev Veda</div>
-          <div className="flex items-center space-x-4">
+          <div className="font-mono text-lg md:text-xl font-bold">Jeev Veda</div>
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <StartButton
-              className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-400"
+              className="px-3 py-2 text-xs sm:text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-400"
               onClick={() => window.location.href = "/login"}
             >
               Log in
             </StartButton>
             <StartButton
-              className="px-4 py-2 text-sm bg-green-400 text-black font-medium hover:bg-green-500"
+              className="px-3 py-2 text-xs sm:text-sm bg-green-400 text-black font-medium hover:bg-green-500"
               onClick={() => window.location.href = "/signup"}
             >
               Sign up
@@ -54,22 +54,21 @@ export default function Home() {
         ))}
 
         {/* Main Content Area */}
-        <div className="col-span-1 md:col-span-6 row-span-8 border-[0.5px] border-gray-200 bg-white h-auto md:h-[448px]">
-          <div className="p-8 px-4 md:px-12 flex flex-col justify-center items-center w-full h-full">
-            <h1 className="text-3xl md:text-4xl font-mono font-light text-center leading-tight pb-8 text-gray-900">
+        <div className="col-span-1 md:col-span-6 row-span-8 border-[0.5px] border-gray-200 bg-white h-auto md:h-[448px] min-h-[400px]">
+          <div className="p-6 sm:p-8 md:px-12 flex flex-col justify-center items-center w-full h-full">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-mono font-light text-center leading-tight pb-6 sm:pb-8 text-gray-900">
               <span className="block">Your health analysis,</span>
-              <span className="underline decoration-green-400 decoration-4 ">
+              <span className="underline decoration-green-400 decoration-2 sm:decoration-4">
                 finally
-                {/* <span className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-emerald-400"></span> */}
               </span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-400"> meaningful</span>
             </h1>
-            <p className="font-mono text-lg md:text-lg text-gray-600 text-center max-w-md md:max-w-3xl mx-auto font-light leading-relaxed">
+            <p className="font-mono text-sm sm:text-base md:text-lg text-gray-600 text-center max-w-sm sm:max-w-md md:max-w-3xl mx-auto font-light leading-relaxed">
               Jeev Veda analyzes your health data for early cancer indicators you might overlook. We deliver personalized screening recommendations that make all the difference.
             </p>
-            <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mt-8">
+            <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 mt-6 sm:mt-8 w-full sm:w-auto">
               <StartButton
-                className="rounded-[3px] flex items-center justify-center"
+                className="rounded-[3px] flex items-center justify-center w-full sm:w-auto min-w-[140px]"
                 onClick={() => window.location.href = "/login"}
               >
                 Start Now
@@ -79,7 +78,7 @@ export default function Home() {
                 </svg>
               </StartButton>
               <LearnMoreButton
-                className="rounded-[3px] cursor-pointer"
+                className="rounded-[3px] cursor-pointer w-full sm:w-auto min-w-[140px]"
                 onClick={() => console.log("Learn more clicked")}
               >
                 Learn More

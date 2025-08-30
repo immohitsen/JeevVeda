@@ -257,18 +257,18 @@ export default function CancerChatbot() {
       {/* Sticky Header - Stays at top of content area */}
       <div className="sticky top-0 bg-white border-b border-gray-100 z-20">
         {/* Chatbot Header */}
-        <div className="px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Health Assistant</h1>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <p className="text-sm text-gray-600">AI-powered health screening • Private & Secure</p>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">Health Assistant</h1>
+              <div className="flex items-center gap-1 sm:gap-2">
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <p className="text-xs sm:text-sm text-gray-600 truncate">AI-powered health screening • Private & Secure</p>
               </div>
             </div>
           </div>
@@ -279,7 +279,7 @@ export default function CancerChatbot() {
           <div className="flex border-b border-gray-100 bg-gray-50">
             <button 
               onClick={() => setActiveTab('chat')} 
-              className={`px-6 py-4 font-medium text-sm transition-colors duration-200 ${
+              className={`flex-1 px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-colors duration-200 ${
                 activeTab === 'chat' 
                   ? 'border-b-2 border-green-500 text-green-600 bg-white' 
                   : 'text-gray-600 hover:text-green-600 hover:bg-white'
@@ -289,7 +289,7 @@ export default function CancerChatbot() {
             </button>
             <button 
               onClick={() => setActiveTab('results')} 
-              className={`px-6 py-4 font-medium text-sm transition-colors duration-200 ${
+              className={`flex-1 px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-colors duration-200 ${
                 activeTab === 'results' 
                   ? 'border-b-2 border-green-500 text-green-600 bg-white' 
                   : 'text-gray-600 hover:text-green-600 hover:bg-white'
@@ -306,15 +306,15 @@ export default function CancerChatbot() {
         {/* Chat Tab Content */}
         {activeTab === 'chat' && (
           <div className="bg-gray-50 relative">
-            <div className="p-4 space-y-4">
+            <div className="p-3 sm:p-4 space-y-3 sm:space-y-4" style={{ paddingBottom: !assessmentComplete ? '120px' : '20px' }}>
               {messages.map((message, index) => (
-               <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}>
+               <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} items-end gap-1.5 sm:gap-2`}>
                  {message.role === 'assistant' && (
-                   <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center flex-shrink-0 mb-1">
+                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center flex-shrink-0 mb-1">
                      <span className="text-xs font-bold text-white">AI</span>
                    </div>
                  )}
-                 <div className={`max-w-lg px-3 py-2 ${ 
+                 <div className={`max-w-[280px] sm:max-w-lg px-3 py-2 ${ 
                    message.role === 'user' 
                      ? 'bg-green-500 text-white rounded-2xl rounded-br-md shadow-sm' 
                      : 'bg-white text-gray-800 rounded-2xl rounded-bl-md shadow-sm border border-gray-200'
@@ -327,7 +327,7 @@ export default function CancerChatbot() {
                      </div>
                  </div>
                  {message.role === 'user' && (
-                   <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0 mb-1">
+                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0 mb-1">
                      <span className="text-xs font-bold text-gray-600">You</span>
                    </div>
                  )}
@@ -446,25 +446,25 @@ export default function CancerChatbot() {
 
       {/* Fixed Input Area - At bottom when assessment not complete */}
       {!assessmentComplete && (
-        <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 p-4 bg-white shadow-lg w-full z-30">
+        <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 p-3 sm:p-4 bg-white shadow-lg w-full z-30">
            <div className="max-w-4xl mx-auto">
-             <div className="flex items-center gap-3">
+             <div className="flex items-center gap-2 sm:gap-3">
                <div className="flex-1 relative">
                  <textarea
                    value={currentInput}
                    onChange={(e) => setCurrentInput(e.target.value)}
                    onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(currentInput); }}}
                    placeholder="Message Health Assistant..."
-                   className="w-full border border-gray-300 rounded-3xl px-4 py-3 pr-12 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100 resize-none text-sm bg-gray-50 focus:bg-white transition-colors"
+                   className="w-full border border-gray-300 rounded-3xl px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100 resize-none text-sm bg-gray-50 focus:bg-white transition-colors"
                    rows={1}
                    disabled={isLoading}
                  />
                  <button
                    onClick={() => handleSendMessage(currentInput)}
                    disabled={isLoading || !currentInput.trim()}
-                   className="absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-gradient-to-r from-green-400 to-emerald-500 text-white rounded-full hover:from-green-500 hover:to-emerald-600 disabled:from-gray-300 disabled:to-gray-400 transition-all duration-200 flex items-center justify-center shadow-sm hover:shadow-md"
+                   className="absolute right-2 top-1/2 transform -translate-y-1/2 w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-green-400 to-emerald-500 text-white rounded-full hover:from-green-500 hover:to-emerald-600 disabled:from-gray-300 disabled:to-gray-400 transition-all duration-200 flex items-center justify-center shadow-sm hover:shadow-md"
                  >
-                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                    </svg>
                  </button>

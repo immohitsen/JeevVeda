@@ -1,6 +1,6 @@
 "use client"
 
-import { Menu, Search, Plus, Mail, Bell, Settings, ChevronDown, User as UserIcon, LogOut } from "lucide-react"
+import { Menu, Search, Plus, FileImage, Bell, Settings, ChevronDown, User as UserIcon, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BrutalButton } from "@/components/ui/brutal-button"
 import { useUser } from "@/hooks/useUser"
@@ -73,35 +73,40 @@ export function Header({ title = "Dashboard", onMenuClick }: HeaderProps) {
         </Button>
       </div>
       
-      <div className="flex items-center gap-4">
-        {/* Search Bar */}
-        <div className="relative">
+      <div className="flex items-center gap-2 sm:gap-4">
+        {/* Search Bar - Hidden on mobile */}
+        <div className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600" />
           <input
             type="text"
             placeholder="Search here"
-            className="pl-10 pr-4 py-2 w-64 border-2 border-black font-mono text-sm bg-white focus:outline-none focus:bg-yellow-100 transition-colors"
+            className="pl-10 pr-4 py-2 w-48 lg:w-64 border-2 border-black font-mono text-sm bg-white focus:outline-none focus:bg-yellow-100 transition-colors"
           />
         </div>
 
-        {/* Add Button */}
-        <BrutalButton variant="secondary" size="md">
+        {/* Add Button - Hidden on mobile */}
+        <BrutalButton variant="secondary" size="md" className="hidden sm:flex">
           <Plus className="w-4 h-4 mr-2" />
-          Add
+          <span className="hidden lg:inline">Add</span>
           <ChevronDown className="w-4 h-4 ml-2" />
         </BrutalButton>
 
-        {/* Notification Icons */}
-        <div className="flex items-center gap-2">
-          <BrutalButton variant="ghost" size="sm">
-            <Mail className="h-4 w-4" />
-            <span className="sr-only">Mail</span>
+        {/* Notification Icons - Responsive */}
+        <div className="flex items-center gap-1 sm:gap-2">
+          <BrutalButton 
+            variant="ghost" 
+            size="sm" 
+            className="hidden sm:flex"
+            onClick={() => router.push('/dashboard/dicom-viewer')}
+          >
+            <FileImage className="h-4 w-4" />
+            <span className="sr-only">DICOM Viewer</span>
           </BrutalButton>
           <BrutalButton variant="ghost" size="sm">
             <Bell className="h-4 w-4" />
             <span className="sr-only">Notifications</span>
           </BrutalButton>
-          <BrutalButton variant="ghost" size="sm">
+          <BrutalButton variant="ghost" size="sm" className="hidden sm:flex">
             <Settings className="h-4 w-4" />
             <span className="sr-only">Settings</span>
           </BrutalButton>
