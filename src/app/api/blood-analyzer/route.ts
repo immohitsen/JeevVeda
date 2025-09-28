@@ -45,8 +45,6 @@ async function extractTextFromImage(imageBuffer: Buffer): Promise<string> {
         console.log(`OCR ${(m.progress * 100).toFixed(1)}%`);
       }
     },
-    // helps on tabular docs
-    tessedit_pageseg_mode: 6,
   });
 
   const text = (data.text || '').trim();
