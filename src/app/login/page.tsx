@@ -37,14 +37,15 @@ export default function LoginPage() {
       toast.success("Login successful! Redirecting...");
       router.push("/dashboard");
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.log("Login Failed", error);
       
       // Handle different types of errors
-      if (error.response) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response: { data?: { error?: string }; status: number } };
         // Server responded with error status
-        const errorMessage = error.response.data?.error || "Login failed";
-        const statusCode = error.response.status;
+        const errorMessage = axiosError.response.data?.error || "Login failed";
+        const statusCode = axiosError.response.status;
         
         // Handle specific error cases
         if (statusCode === 400) {

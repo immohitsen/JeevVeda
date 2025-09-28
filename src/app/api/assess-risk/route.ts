@@ -27,7 +27,7 @@ interface RiskFactors {
   symptom_swallowing: string;
   symptom_mole_change: string;
   symptom_cough: string;
-  [key: string]: any;
+  [key: string]: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -86,7 +86,7 @@ No markdown or extra text—only the JSON after the paragraph.
 
     const summary = fullText.slice(0, fullText.indexOf(jsonMatch[0])).trim();
 
-    let assessment: any;
+    let assessment: Record<string, unknown>;
     try {
       assessment = JSON.parse(jsonMatch[0]);
     } catch (err) {
@@ -99,7 +99,7 @@ No markdown or extra text—only the JSON after the paragraph.
       summary,
       assessment,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error in risk assessment API:", err);
     return NextResponse.json(
       { success: false, error: "Could not complete risk assessment" },

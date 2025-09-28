@@ -1,8 +1,6 @@
 "use client"
 
-import { Activity, FileText, Home, Settings, Stethoscope, Calendar, User, X, Users, Building2, CreditCard, Package, Clock, ChevronDown, MessageCircle, ActivitySquare, History, Shield, Scan, ClipboardList, UserCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { BrutalButton } from "@/components/ui/brutal-button"
+import { Home, MessageCircle, ActivitySquare, History, Shield, Scan, ClipboardList, UserCircle } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 
 // Medical navigation items matching the image
@@ -32,14 +30,6 @@ const navigationItems = [
     ]
   }
 ];
-
-const helpItems = [
-  {
-    title: "Help Center",
-    url: "/dashboard/help",
-    icon: Clock,
-  },
-]
 
 interface AppSidebarProps {
   onClose?: () => void

@@ -1,6 +1,6 @@
 "use client"
 
-import { Scan, Brain, Heart, Wind, Eye, Bone, Shield, Clock, ArrowRight, Activity, FileText, Users } from "lucide-react"
+import { Scan, Brain, Heart, Wind, Eye, Shield, Clock, ArrowRight, Activity, FileText, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 const screeningTools = [

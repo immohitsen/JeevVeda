@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { Upload, FileImage, X, ArrowLeft, ZoomIn, ZoomOut, RotateCw, Move, ChevronLeft, ChevronRight, Play, Pause, Ruler, RotateCcw, Sun, Moon, Settings } from "lucide-react"
+import { useState, useEffect, useRef, useCallback } from "react"
+import { Upload, FileImage, X, ArrowLeft, ZoomIn, ZoomOut, Move, ChevronLeft, ChevronRight, Play, Pause, Ruler, Sun, Moon, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { DicomParser, DicomImageData } from "@/lib/dicom"
@@ -18,13 +18,13 @@ export default function DicomViewerPage() {
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [currentFrame, setCurrentFrame] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [playbackSpeed, setPlaybackSpeed] = useState(500) // ms per frame
+  const [playbackSpeed] = useState(500) // ms per frame
   const [windowCenter, setWindowCenter] = useState<number | null>(null)
   const [windowWidth, setWindowWidth] = useState<number | null>(null)
   const [brightness, setBrightness] = useState(0)
   const [contrast, setContrast] = useState(1)
   const [activeTool, setActiveTool] = useState<'none' | 'measure' | 'angle' | 'pan'>('none')
-  const [measurements, setMeasurements] = useState<any[]>([])
+  const [measurements, setMeasurements] = useState<{x: number; y: number}[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -109,7 +109,7 @@ export default function DicomViewerPage() {
     loadDicomFile(file)
   }
 
-  const renderDicomFrame = () => {
+  const renderDicomFrame = useCallback(() => {
     if (!dicomData || !canvasRef.current || currentFrame >= dicomData.numberOfFrames) return
     
     try {
@@ -192,23 +192,23 @@ export default function DicomViewerPage() {
       console.error('Frame render error:', err)
       setError(`Failed to render frame ${currentFrame + 1}: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
-  }
+  }, [dicomData, currentFrame, windowCenter, windowWidth, brightness, contrast])
   
-  const nextFrame = () => {
+  const nextFrame = useCallback(() => {
     if (dicomData && currentFrame < dicomData.numberOfFrames - 1) {
       const newFrame = currentFrame + 1
       console.log('Next frame:', newFrame)
       setCurrentFrame(newFrame)
     }
-  }
+  }, [dicomData, currentFrame])
   
-  const prevFrame = () => {
+  const prevFrame = useCallback(() => {
     if (currentFrame > 0) {
       const newFrame = currentFrame - 1
       console.log('Previous frame:', newFrame)
       setCurrentFrame(newFrame)
     }
-  }
+  }, [currentFrame])
   
   const goToFrame = (frameIndex: number) => {
     if (dicomData && frameIndex >= 0 && frameIndex < dicomData.numberOfFrames) {
@@ -217,11 +217,11 @@ export default function DicomViewerPage() {
     }
   }
   
-  const togglePlayback = () => {
+  const togglePlayback = useCallback(() => {
     setIsPlaying(!isPlaying)
-  }
+  }, [isPlaying])
   
-  const resetView = () => {
+  const resetView = useCallback(() => {
     // Set a slight upward offset to position the image higher
     setPan({ x: 0, y: 40 })
     setBrightness(0)
@@ -248,7 +248,7 @@ export default function DicomViewerPage() {
     } else {
       setZoom(1)
     }
-  }
+  }, [dicomData])
   
   // Window/Level presets for different scan types
   const windowPresets = {
@@ -314,7 +314,7 @@ export default function DicomViewerPage() {
     if (dicomData) {
       renderDicomFrame()
     }
-  }, [dicomData, currentFrame, windowCenter, windowWidth, brightness, contrast])
+  }, [dicomData, currentFrame, windowCenter, windowWidth, brightness, contrast, renderDicomFrame])
   
   // Keyboard and mouse wheel navigation
   useEffect(() => {
@@ -370,7 +370,7 @@ export default function DicomViewerPage() {
       window.removeEventListener('keydown', handleKeyDown)
       document.removeEventListener('wheel', handleWheel)
     }
-  }, [dicomData, currentFrame, isPlaying])
+  }, [dicomData, currentFrame, isPlaying, nextFrame, prevFrame, togglePlayback, resetView])
   
   // Auto-fit image when loaded or when container size changes
   useEffect(() => {
@@ -391,7 +391,7 @@ export default function DicomViewerPage() {
         window.removeEventListener('resize', handleResize)
       }
     }
-  }, [dicomData])
+  }, [dicomData, resetView])
 
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">

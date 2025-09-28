@@ -77,19 +77,19 @@ export async function POST(request: NextRequest) {
 
     return response;
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Login error:", error);
     
     // Handle specific MongoDB/Mongoose errors
-    if (error.name === "ValidationError") {
+    if (error instanceof Error && error.name === "ValidationError") {
       return NextResponse.json(
-        { error: "Invalid input data" }, 
+        { error: "Invalid input data" },
         { status: 400 }
       );
     }
-    
+
     // Handle database connection errors
-    if (error.name === "MongoNetworkError") {
+    if (error instanceof Error && error.name === "MongoNetworkError") {
       return NextResponse.json(
         { error: "Database connection failed. Please try again later." }, 
         { status: 503 }

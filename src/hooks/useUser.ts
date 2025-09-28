@@ -29,13 +29,18 @@ export function useUser() {
       if (response.data.success) {
         setUser(response.data.user)
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch user:', error)
-      
-      if (error.response?.status === 401) {
-        // Token expired or invalid - user needs to login again
-        setUser(null)
-        setError('Authentication expired')
+
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response: { status: number } };
+        if (axiosError.response?.status === 401) {
+          // Token expired or invalid - user needs to login again
+          setUser(null)
+          setError('Authentication expired')
+        } else {
+          setError('Failed to load user data')
+        }
       } else {
         setError('Failed to load user data')
       }

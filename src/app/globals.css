@@ -205,3 +205,29 @@ body {
   border-bottom: 0;
   border-right: 0;
 }
+
+/* Hide scrollbars for WhatsApp-style chat */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* WhatsApp message animations */
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.message-entrance {
+  animation: messageSlideIn 0.3s ease-out;
+}

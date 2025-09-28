@@ -3,7 +3,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRequire } from 'module';
 import Tesseract from 'tesseract.js';
-import type { ReadableStream } from 'stream/web';
 import { GoogleGenAI } from '@google/genai';
 
 // ✅ Run on Node (pdf-parse & canvas need Node APIs)
@@ -14,12 +13,6 @@ export const maxDuration = 60;
 // ---- AI client (@google/genai) ----
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? '' });
 
-// ---------- Utilities ----------
-function bufFromFile(file: File): Promise<Buffer> {
-  return file
-    .arrayBuffer()
-    .then((ab) => Buffer.from(ab));
-}
 
 // Clean extracted text a bit but keep medical formatting
 function cleanText(text: string): string {
@@ -47,14 +40,14 @@ function validateMedicalText(text: string): boolean {
 // ---------- OCR (Images) ----------
 async function extractTextFromImage(imageBuffer: Buffer): Promise<string> {
   const { data } = await Tesseract.recognize(imageBuffer, 'eng', {
-    logger: (m: any) => {
+    logger: (m: { status: string; progress: number }) => {
       if (m.status === 'recognizing text') {
         console.log(`OCR ${(m.progress * 100).toFixed(1)}%`);
       }
     },
     // helps on tabular docs
     tessedit_pageseg_mode: 6,
-  } as any);
+  });
 
   const text = (data.text || '').trim();
   // Don’t fail on confidence alone; check if anything meaningful was read
@@ -84,13 +77,6 @@ async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
   }
 }
 
-// ---------- PDF (fallback OCR, best-effort) ----------
-async function extractTextFromPdfWithOCR(pdfBuffer: Buffer): Promise<string> {
-  // For now, just return empty string as fallback
-  // This can be implemented later if needed
-  console.warn('PDF OCR fallback not implemented');
-  return '';
-}
 
 // ---------- Route ----------
 export async function POST(req: NextRequest) {
@@ -106,7 +92,7 @@ export async function POST(req: NextRequest) {
       const fileAny = formData.get('file');
   
       // ✅ Ensure we actually got a Browser File object, not a string/path
-      if (!fileAny || typeof (fileAny as any).arrayBuffer !== 'function') {
+      if (!fileAny || typeof (fileAny as File).arrayBuffer !== 'function') {
         return NextResponse.json(
           { error: 'No valid file uploaded. Please select a file from your device.' },
           { status: 400 }
@@ -138,8 +124,8 @@ export async function POST(req: NextRequest) {
     if (file.type === 'application/pdf') {
       try {
         extractedText = await extractTextFromPDF(fileBuffer);
-      } catch (error: any) {
-        const msg = String(error?.message || error);
+      } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : String(error);
         if (msg.includes('ENOENT')) {
           return NextResponse.json(
             {
@@ -191,7 +177,7 @@ Return this exact JSON structure:
     });
 
     const responseText = ai.text || '';
-    let analysisResult: any;
+    let analysisResult: Record<string, unknown>;
     try {
       // Try to extract JSON if it's wrapped in markdown or other text
       let jsonText = responseText;
@@ -229,7 +215,7 @@ Return this exact JSON structure:
       };
     }
 
-    if (!analysisResult?.testResults || analysisResult.testResults.length === 0) {
+    if (!analysisResult?.testResults || (Array.isArray(analysisResult.testResults) && analysisResult.testResults.length === 0)) {
       return NextResponse.json(
         { error: 'No test data could be extracted from the report.' },
         { status: 400 }
@@ -248,12 +234,12 @@ Return this exact JSON structure:
         ocrMethod: file.type === 'application/pdf' ? 'pdf-parse|ocr-fallback' : 'tesseract-ocr',
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Blood analyzer API error:', error);
     return NextResponse.json(
       {
         success: false,
-        error: error?.message ?? 'Failed to process the file',
+        error: error instanceof Error ? error.message : 'Failed to process the file',
         details: 'Upload a clear image or a selectable-text PDF of your blood report.',
       },
       { status: 500 }

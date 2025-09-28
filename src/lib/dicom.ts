@@ -33,7 +33,7 @@ export class DicomParser {
       const width = dataSet.uint16('x00280011') // Columns
       const height = dataSet.uint16('x00280010') // Rows
       const bitsAllocated = dataSet.uint16('x00280100') // Bits Allocated
-      const pixelRepresentation = dataSet.uint16('x00280103') // Pixel Representation
+      // const pixelRepresentation = dataSet.uint16('x00280103') // Pixel Representation (currently unused)
       
       if (!width || !height) {
         throw new Error('Invalid DICOM file: missing image dimensions')

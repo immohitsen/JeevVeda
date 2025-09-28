@@ -1,13 +1,12 @@
 "use client"
 
-import { Activity, FileText, Home, MessageCircle, ActivitySquare, History, Shield, Scan, ClipboardList, UserCircle, Clock, ChevronLeft, ChevronRight } from "lucide-react"
+import { Home, MessageCircle, ActivitySquare, History, Shield, Scan, ClipboardList, UserCircle, Clock, ChevronLeft } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { BrutalButton } from "@/components/ui/brutal-button"
 import { cn } from "@/lib/utils"
 import {
   Sidebar,
   SidebarBody,
-  SidebarLink,
 } from "@/components/ui/aceternity-sidebar"
 import { useState } from "react"
 import { motion } from "motion/react"
@@ -58,14 +57,6 @@ export function ExpandableSidebar({ onClose }: ExpandableSidebarProps) {
     return pathname === path
   }
 
-  // Flatten navigation items for SidebarLink format
-  const links = navigationItems.flatMap(section => 
-    section.items.map(item => ({
-      label: item.label,
-      href: item.url,
-      icon: item.icon,
-    }))
-  )
 
   return (
     <Sidebar open={open} setOpen={setOpen} animate={true}>

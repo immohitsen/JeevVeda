@@ -1,6 +1,6 @@
 "use client"
 
-import { FileText, Download, Eye, Search, Filter, Calendar, User, Clock, AlertTriangle, CheckCircle, XCircle, MoreHorizontal } from "lucide-react"
+import { FileText, Download, Eye, Search, Filter, Calendar, User, Clock, AlertTriangle, CheckCircle, MoreHorizontal } from "lucide-react"
 
 const reportTypes = [
   { label: "All Reports", value: "all", count: 156 },

@@ -12,7 +12,7 @@ interface HeaderProps {
   onMenuClick?: () => void
 }
 
-export function Header({ title = "Dashboard", onMenuClick }: HeaderProps) {
+export function Header({ onMenuClick }: HeaderProps) {
   const { user, loading, isAuthenticated, logout } = useUser()
   const router = useRouter()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
@@ -62,14 +62,14 @@ export function Header({ title = "Dashboard", onMenuClick }: HeaderProps) {
   return (
     <header className="flex h-16 shrink-0 items-center justify-between bg-white px-6">
       <div className="flex items-center gap-3">
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors lg:hidden"
           onClick={onMenuClick}
         >
           <Menu className="h-5 w-5" />
-          <span className="sr-only">Open menu</span>
+          <span className="sr-only">Open mobile menu</span>
         </Button>
       </div>
       

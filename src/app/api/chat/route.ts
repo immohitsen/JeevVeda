@@ -53,7 +53,6 @@ export async function POST(req: NextRequest) {
     }
 
     const collectedFields = Object.keys(validatedResponses);
-    const lastUserMessage = history[history.length - 1]?.content || "";
 
     // Figure out missing fields so far
     const missingFields = getMissingFields(requiredFields, collectedFields);

@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify token
-    const decodedToken: any = jwt.verify(token, process.env.TOKEN_SECRET!);
+    const decodedToken = jwt.verify(token, process.env.TOKEN_SECRET!) as { id: string };
     
     // Get user from database
     const user = await User.findById(decodedToken.id).select("-password");
@@ -45,10 +45,10 @@ export async function GET(request: NextRequest) {
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Get user error:", error);
-    
-    if (error.name === 'JsonWebTokenError') {
+
+    if (error instanceof Error && error.name === 'JsonWebTokenError') {
       return NextResponse.json(
         { error: "Invalid token" }, 
         { status: 401 }
