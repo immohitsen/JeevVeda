@@ -50,14 +50,14 @@ export async function GET(request: NextRequest) {
 
     if (error instanceof Error && error.name === 'JsonWebTokenError') {
       return NextResponse.json(
-        { error: "Invalid token" }, 
+        { error: "Invalid token" },
         { status: 401 }
       );
     }
-    
-    if (error.name === 'TokenExpiredError') {
+
+    if (error instanceof Error && error.name === 'TokenExpiredError') {
       return NextResponse.json(
-        { error: "Token expired" }, 
+        { error: "Token expired" },
         { status: 401 }
       );
     }
