@@ -94,6 +94,7 @@ export default function DicomViewerPage() {
         setBrightness(0)
         setContrast(1)
         setMeasurements([])
+        console.log('Measurements cleared:', _measurements.length)
       } else {
         setError('Failed to parse DICOM file')
       }
