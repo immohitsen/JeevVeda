@@ -65,7 +65,7 @@ export default function LoginPage() {
         }
         
         toast.error(errorMessage);
-      } else if (error.request) {
+      } else if (error && typeof error === 'object' && 'request' in error) {
         // Network error
         setError("Network error. Please check your internet connection.");
         toast.error("Connection failed");

@@ -145,7 +145,7 @@ export const MobileSidebar = ({
                 "fixed h-full w-full inset-0 bg-white p-10 z-[100] flex flex-col justify-between",
                 className
               )}
-              {...props}
+              {...(props as React.ComponentProps<typeof motion.div>)}
             >
               <div
                 className="absolute right-10 top-10 z-50 text-neutral-800"
