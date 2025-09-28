@@ -24,7 +24,7 @@ export default function DicomViewerPage() {
   const [brightness, setBrightness] = useState(0)
   const [contrast, setContrast] = useState(1)
   const [activeTool, setActiveTool] = useState<'none' | 'measure' | 'angle' | 'pan'>('none')
-  const [, setMeasurements] = useState<{x: number; y: number}[]>([])
+  const [_measurements, setMeasurements] = useState<{x: number; y: number}[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const canvasRef = useRef<HTMLCanvasElement>(null)
