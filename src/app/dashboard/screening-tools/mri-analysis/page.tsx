@@ -322,7 +322,6 @@ export default function MRIAnalysisPage() {
               >
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Image Preview</h3>
                 <div className="relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <motion.img
                     src={previewUrl}
                     alt="MRI Preview"

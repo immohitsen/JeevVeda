@@ -5,16 +5,27 @@ import { useRouter } from "next/navigation"
 import { History, FileText, Download, Eye, Activity, Scan, Shield } from "lucide-react"
 import { Button } from "@/components/ui/professional-button"
 
+interface Report {
+  _id: string;
+  reportType: string;
+  fileName?: string;
+  fileSize?: number;
+  createdAt: string;
+  reportData?: Record<string, unknown>;
+}
+
 export default function ReportHistoryPage() {
   const router = useRouter()
   const [selectedFilter, setSelectedFilter] = useState<string>('ALL')
   const [searchQuery, setSearchQuery] = useState('')
-  const [reports, setReports] = useState<Record<string, unknown>[]>([])
+  const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(true)
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
-    totalReports: 0
+    totalReports: 0,
+    hasNext: false,
+    hasPrev: false
   })
 
   // Fetch reports from API
@@ -70,7 +81,7 @@ export default function ReportHistoryPage() {
   }
 
   // Format file size
-  const formatFileSize = (bytes: number) => {
+  const formatFileSize = (bytes?: number) => {
     if (!bytes) return 'N/A'
     const mb = bytes / (1024 * 1024)
     return `${mb.toFixed(2)} MB`

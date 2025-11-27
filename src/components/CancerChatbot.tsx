@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { UserHealthData, ChatResponse } from '@/lib/types';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -112,15 +112,15 @@ export default function CancerChatbot() {
   const [activeTab, setActiveTab] = useState<'chat' | 'results'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     if (activeTab === 'chat') {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  };
+  }, [activeTab]);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, activeTab, scrollToBottom]);
+  }, [messages, scrollToBottom]);
 
   const handleSendMessage = async (messageText: string) => {
     if (!messageText.trim() || isLoading) return;
