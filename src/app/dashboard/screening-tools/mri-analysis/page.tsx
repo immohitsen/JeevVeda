@@ -4,7 +4,6 @@ import { useState, useRef } from "react"
 import { Upload, Brain, AlertTriangle, CheckCircle, ArrowLeft, FileImage, X, Loader2, Download, Eye } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "motion/react"
-import Image from "next/image"
 
 interface PredictionResult {
   prediction: string

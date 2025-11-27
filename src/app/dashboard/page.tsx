@@ -9,7 +9,6 @@ import {
   MessageSquare,
   FileText,
   Heart,
-  Wind,
   Shield,
   AlertTriangle,
   CheckCircle,
@@ -19,11 +18,35 @@ import {
 } from "lucide-react"
 import { useState, useEffect } from "react"
 
+interface ReportData {
+  _id: string;
+  reportType: string;
+  createdAt: string;
+  reportData?: {
+    cancerRiskAssessment?: {
+      overallRisk?: string;
+    };
+    prediction?: string;
+    assessment?: {
+      riskCategory?: string;
+    };
+  };
+}
+
 export default function Dashboard() {
   const { user, loading } = useUser()
   const router = useRouter()
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [recentReports, setRecentReports] = useState<any[]>([])
+  const [recentReports, setRecentReports] = useState<Array<{
+    id: string;
+    fullId: string;
+    type: string;
+    date: string;
+    status: string;
+    riskLevel: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+  }>>([])
   const [loadingReports, setLoadingReports] = useState(true)
   const [totalReports, setTotalReports] = useState(0)
 
@@ -41,7 +64,7 @@ export default function Dashboard() {
 
         if (data.success) {
           // Transform reports for display
-          const transformedReports = data.reports.map((report: any) => {
+          const transformedReports = data.reports.map((report: ReportData) => {
             let type = ''
             let icon = Activity
             let status = 'Completed'

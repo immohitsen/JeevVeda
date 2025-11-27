@@ -21,7 +21,7 @@ export async function GET(
     }
 
     // Verify token and get userId
-    const decoded: any = jwt.verify(token, process.env.TOKEN_SECRET!);
+    const decoded = jwt.verify(token, process.env.TOKEN_SECRET!) as { id: string };
     const userId = decoded.id;
 
     // Fetch report
@@ -42,9 +42,10 @@ export async function GET(
       report
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     );
   }
@@ -66,7 +67,7 @@ export async function DELETE(
     }
 
     // Verify token and get userId
-    const decoded: any = jwt.verify(token, process.env.TOKEN_SECRET!);
+    const decoded = jwt.verify(token, process.env.TOKEN_SECRET!) as { id: string };
     const userId = decoded.id;
 
     // Delete report
@@ -87,9 +88,10 @@ export async function DELETE(
       message: "Report deleted successfully"
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     );
   }

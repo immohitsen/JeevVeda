@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       // Get userId from token
       const token = request.cookies.get('token')?.value
       if (token && file) {
-        const decoded: any = jwt.verify(token, process.env.TOKEN_SECRET!)
+        const decoded = jwt.verify(token, process.env.TOKEN_SECRET!) as { id: string }
         const userId = decoded.id
 
         // Save report

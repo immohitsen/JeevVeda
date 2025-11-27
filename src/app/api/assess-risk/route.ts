@@ -105,7 +105,7 @@ No markdown or extra text—only the JSON after the paragraph.
       // Get userId from token
       const token = req.cookies.get("token")?.value;
       if (token) {
-        const decoded: any = jwt.verify(token, process.env.TOKEN_SECRET!);
+        const decoded = jwt.verify(token, process.env.TOKEN_SECRET!) as { id: string };
         const userId = decoded.id;
 
         // Save report

@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify token and get userId
-    const decoded: any = jwt.verify(token, process.env.TOKEN_SECRET!);
+    const decoded = jwt.verify(token, process.env.TOKEN_SECRET!) as { id: string };
     const userId = decoded.id;
 
     // Get query parameters
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
 
     // Build query
-    const query: any = { userId };
+    const query: { userId: string; reportType?: string } = { userId };
     if (reportType && reportType !== "ALL") {
       query.reportType = reportType;
     }
@@ -54,9 +54,10 @@ export async function GET(request: NextRequest) {
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     );
   }
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify token and get userId
-    const decoded: any = jwt.verify(token, process.env.TOKEN_SECRET!);
+    const decoded = jwt.verify(token, process.env.TOKEN_SECRET!) as { id: string };
     const userId = decoded.id;
 
     // Get request body
@@ -107,9 +108,10 @@ export async function POST(request: NextRequest) {
       message: "Report saved successfully"
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     );
   }
