@@ -180,17 +180,31 @@ export async function POST(req: NextRequest) {
           ],
         },
       ],
-      temperature: 0.0,
-      maxOutputTokens: 1500,
-      topK: 1,
-    } as any);
+      config: {
+        temperature: 0.0,
+        maxOutputTokens: 1500,
+        topK: 1,
+      },
+    });
 
     // Try to get text from different possible shapes
+    const aiResponse = ai as unknown as {
+      text?: string;
+      outputText?: string;
+      response?: {
+        candidates?: Array<{
+          content?: {
+            parts?: Array<{ text?: string }>;
+          };
+        }>;
+      };
+    };
+
     const responseText =
-      (ai as any).text ||
-      (ai as any).outputText ||
-      (ai as any).response?.candidates?.[0]?.content?.parts
-        ?.map((p: any) => p.text || '')
+      aiResponse.text ||
+      aiResponse.outputText ||
+      aiResponse.response?.candidates?.[0]?.content?.parts
+        ?.map((p) => p.text || '')
         .join('\n') ||
       '';
 
@@ -278,7 +292,7 @@ export async function POST(req: NextRequest) {
         fileSize: file.size,
         fileType: file.type,
         processedAt: new Date().toISOString(),
-        ocrMethod: 'gemini-3-pro-inline',
+        ocrMethod: 'gemini-2.5-pro-inline',
       },
     });
   } catch (error: unknown) {
