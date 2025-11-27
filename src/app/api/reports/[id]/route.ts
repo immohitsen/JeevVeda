@@ -8,9 +8,12 @@ connect();
 // Get single report by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params in Next.js 15
+    const { id } = await params;
+
     // Get token from cookies
     const token = request.cookies.get("token")?.value;
     if (!token) {
@@ -26,7 +29,7 @@ export async function GET(
 
     // Fetch report
     const report = await Report.findOne({
-      _id: params.id,
+      _id: id,
       userId  // Ensure user can only access their own reports
     }).lean();
 
@@ -54,9 +57,12 @@ export async function GET(
 // Delete report
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params in Next.js 15
+    const { id } = await params;
+
     // Get token from cookies
     const token = request.cookies.get("token")?.value;
     if (!token) {
@@ -72,7 +78,7 @@ export async function DELETE(
 
     // Delete report
     const result = await Report.deleteOne({
-      _id: params.id,
+      _id: id,
       userId  // Ensure user can only delete their own reports
     });
 
