@@ -292,7 +292,7 @@ export async function POST(req: NextRequest) {
         fileSize: file.size,
         fileType: file.type,
         processedAt: new Date().toISOString(),
-        ocrMethod: 'gemini-2.5-pro-inline',
+        ocrMethod: 'gemini-3-pro-inline',
       },
     });
   } catch (error: unknown) {
