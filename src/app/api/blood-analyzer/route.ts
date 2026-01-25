@@ -10,258 +10,274 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-// ---- AI client (@google/genai) ----
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? '' });
+// ---- Initialize Google Gen AI client ----
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY ?? '',
+});
 
 // Connect to database
 connect();
 
-// --- Build prompt for Gemini 3 (extraction + analysis + JSON) ---
-function buildPrompt() {
+// Import PDFParse from pdf-parse using require
+const { PDFParse } = require('pdf-parse');
+
+// --- Build prompt for Gemini 3.0 Flash ---
+function buildPrompt(isTextMode: boolean) {
   return `
-You are a careful medical-report parser.
+    You are an expert medical-report analyst using the Gemini 3.0 engine.
+    You are given a blood test report as ${isTextMode ? 'EXTRACTED TEXT' : 'an IMAGE/DOCUMENT'}.
 
-You are given a blood test report as a FILE (image or PDF). 
+    Your job is to:
+    1. Analyze the ${isTextMode ? 'text' : 'document'} for patient details, test results, and health risks.
+    2. Return the result strictly as a JSON object matching the schema below.
+    ${isTextMode ? 'Note: The text may have OCR errors or formatting issues. Try to reconstruct the context and extract meaningful data.' : ''}
 
-Your job:
-
-1. Internally extract all readable text from the file (blood report).
-2. From that text, identify:
-   - Patient details (if present)
-   - All blood test results
-   - Any indicators of cancer risk or other health risks
-3. Return ONLY a single JSON object with this exact structure and keys:
-
-{
-  "patientInfo": { "name": null, "age": null, "gender": null, "reportDate": null },
-  "testResults": [
+    Required JSON Structure:
     {
-      "category": "Complete Blood Count",
-      "tests": [
+      "patientInfo": {
+        "name": "string or null",
+        "age": "number or null",
+        "gender": "string or null",
+        "reportDate": "string or null"
+      },
+      "testResults": [
         {
-          "testName": "Hemoglobin",
-          "value": "12.5",
-          "unit": "g/dL",
-          "referenceRange": "12.0-15.5",
-          "status": "normal"
+          "category": "string (e.g. 'CBC', 'Lipid Profile', 'Liver Function')",
+          "tests": [
+            {
+              "testName": "string",
+              "value": "string or number",
+              "unit": "string",
+              "referenceRange": "string",
+              "status": "normal|high|low|critical|unknown"
+            }
+          ]
         }
-      ]
-    }
-  ],
-  "cancerRiskAssessment": {
-    "overallRisk": "low",
-    "riskFactors": [
-      {
-        "factor": "Age",
-        "value": "Unknown",
-        "significance": "Cannot assess",
-        "riskLevel": "low"
-      }
-    ],
-    "cancerTypes": [
-      {
-        "type": "General",
-        "riskLevel": "low",
-        "indicators": []
-      }
-    ],
-    "recommendations": ["Regular health checkups recommended"]
-  },
-  "otherHealthRisks": [
-    {
-      "condition": "General Health",
-      "risk": "low",
-      "indicators": [],
-      "description": "Based on available blood work"
-    }
-  ],
-  "insights": ["Blood parameters appear within normal ranges"],
-  "overallAssessment": "Blood work shows normal values"
-}
-
-Important rules:
-- Use the actual values from the report wherever possible.
-- If a value is missing in the report, use null or "Unknown" where appropriate.
-- Do NOT invent tests or values that are not present.
-- "status" should be "low", "high", "normal", or "unknown" based on reference ranges if they are given.
-- If you cannot read the report or it is not a blood report, then return this fallback JSON:
-
-{
-  "patientInfo": { "name": null, "age": null, "gender": null, "reportDate": null },
-  "testResults": [
-    {
-      "category": "Unable to Parse",
-      "tests": [
+      ],
+      "cancerRiskAssessment": {
+        "overallRisk": "low|moderate|high|low_to_moderate",
+        "riskFactors": [
+          {
+            "factor": "string",
+            "value": "string",
+            "significance": "string",
+            "riskLevel": "low|moderate|high"
+          }
+        ],
+        "cancerTypes": [
+          {
+            "type": "string",
+            "riskLevel": "low|moderate|high",
+            "indicators": ["string"]
+          }
+        ],
+        "recommendations": ["string"]
+      },
+      "otherHealthRisks": [
         {
-          "testName": "Error",
-          "value": "Could not extract data",
-          "unit": "",
-          "referenceRange": "",
-          "status": "unknown"
+          "condition": "string",
+          "risk": "low|moderate|high",
+          "indicators": ["string"],
+          "description": "string"
         }
-      ]
+      ],
+      "insights": ["string (AI generated health insights)"],
+      "overallAssessment": "string (summary)"
     }
-  ],
-  "cancerRiskAssessment": {
-    "overallRisk": "unable_to_determine",
-    "riskFactors": [],
-    "cancerTypes": [],
-    "recommendations": ["Please upload a clearer report"]
-  },
-  "otherHealthRisks": [],
-  "insights": ["Unable to process report format"],
-  "overallAssessment": "Please try uploading a clearer or different format of your blood report"
+
+    Important Guidelines:
+    - Return ONLY valid JSON, no markdown formatting.
+    - Status values MUST be lowercase: normal, high, low, critical, unknown.
+    - Risk levels MUST be lowercase: low, moderate, high.
+    - "testResults" should be grouped by category (e.g., CBC, KFT, LFT).
+    - If a specific field is not found, use null.
+    - **CRITICAL**: If no specific cancer markers or abnormal cell counts are found, set "overallRisk" to "low". DO NOT use "unable_to_determine".
+    - If the report is normal, emphasize the "Low Risk" status positively.
+    - Be precise with medical terminology.
+    `;
 }
 
-Return ONLY the JSON object. No markdown, no commentary, no extra text.
-`;
+// --- Async PDF Parser Function using PDFParse class ---
+async function parsePDFBuffer(buffer: Buffer): Promise<string> {
+  try {
+    // Create PDFParse instance with buffer data
+    const parser = new PDFParse({ data: buffer });
+    
+    // Extract text
+    const result = await parser.getText();
+    
+    // Cleanup
+    await parser.destroy();
+    
+    return result.text;
+  } catch (error) {
+    console.error('PDF parsing error:', error);
+    throw error;
+  }
 }
 
-// ---------- Route ----------
 export async function POST(req: NextRequest) {
   try {
-    if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json(
-        { error: 'Gemini API key missing. Set GEMINI_API_KEY in your environment.' },
-        { status: 500 }
-      );
-    }
-
     const formData = await req.formData();
-    const fileAny = formData.get('file');
+    const file = formData.get('file') as File;
 
-    if (!fileAny || typeof (fileAny as File).arrayBuffer !== 'function') {
+    if (!file) {
       return NextResponse.json(
-        { error: 'No valid file uploaded. Please select a file from your device.' },
+        { error: 'No file provided' },
         { status: 400 }
       );
     }
 
-    const file = fileAny as File;
-    console.log('Upload:', { name: file.name, type: file.type, size: file.size });
-
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
-    if (!validTypes.includes(file.type)) {
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Invalid file type. Only JPG, PNG, and PDF are supported.' },
+        { error: 'Invalid file type. Only PDF, JPG, and PNG are supported.' },
         { status: 400 }
       );
     }
 
-    const maxSize = file.type === 'application/pdf' ? 30 * 1024 * 1024 : 15 * 1024 * 1024;
-    if (!file.size || file.size > maxSize) {
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json(
-        { error: `File size must be under ${file.type === 'application/pdf' ? '30MB' : '15MB'}.` },
+        { error: 'File size exceeds 10MB limit' },
         { status: 400 }
       );
     }
+
+    console.log(`Processing file: ${file.name}, Type: ${file.type}, Size: ${file.size} bytes`);
 
     const fileBuffer = Buffer.from(await file.arrayBuffer());
-    const base64Data = fileBuffer.toString('base64');
+    
+    let contentParts: any[] = [];
+    let isTextMode = false;
 
-    const prompt = buildPrompt();
-
-    // ---- Gemini 3 Pro call with inline file ----
-    const ai = await genAI.models.generateContent({
-      model: 'gemini-2.5-pro',
-      contents: [
+    // ===== PDF Processing =====
+    if (file.type === 'application/pdf') {
+      try {
+        console.log("🔄 Parsing PDF with PDFParse...");
+        
+        // Use PDFParse class to extract text
+        const extractedText = await parsePDFBuffer(fileBuffer);
+        
+        if (!extractedText || extractedText.trim().length < 50) {
+          console.warn("PDF text too short or empty. Likely a scanned document. Falling back to vision analysis.");
+          throw new Error("SCANNED_PDF_FALLBACK");
+        }
+        
+        isTextMode = true;
+        contentParts = [
+          { text: buildPrompt(true) },
+          { text: `\n\nExtracted Blood Report Text:\n${extractedText}` }
+        ];
+        
+        console.log("PDF Text Extracted successfully, length:", extractedText.length);
+        
+      } catch (err: any) {
+        console.log("Switching to PDF-as-Document analysis (Fallback mode)");
+        
+        // Fallback: Send the PDF as base64 data (Gemini can read PDFs directly)
+        const base64Data = fileBuffer.toString('base64');
+        isTextMode = false;
+        
+        contentParts = [
+          { text: buildPrompt(false) },
+          {
+            inlineData: {
+              mimeType: 'application/pdf',
+              data: base64Data,
+            },
+          }
+        ];
+        
+        console.log("✅ PDF prepared for vision analysis");
+      }
+    } 
+    // ===== Image Processing =====
+    else {
+      const base64Data = fileBuffer.toString('base64');
+      isTextMode = false;
+      
+      contentParts = [
+        { text: buildPrompt(false) },
         {
-          role: 'user',
-          parts: [
-            {
-              inlineData: {
-                mimeType: file.type,
-                data: base64Data,
-              },
-            },
-            {
-              text: prompt,
-            },
-          ],
-        },
-      ],
+          inlineData: {
+            mimeType: file.type,
+            data: base64Data,
+          },
+        }
+      ];
+      
+      console.log("✅ Image processed, ready for analysis");
+    }
+
+    // ===== Gemini 3.0 Flash API Call =====
+    console.log("🔄 Calling Gemini 3.0 Flash API...");
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview', // ✅ Using Gemini 3.0 Flash
+      contents: contentParts,
       config: {
-        temperature: 0.0,
-        maxOutputTokens: 1500,
-        topK: 1,
-      },
+        temperature: 0.1,
+        maxOutputTokens: 8192,
+        responseMimeType: "application/json",
+      }
     });
+    console.log(response);
+    const responseText = response.text;
 
-    // Try to get text from different possible shapes
-    const aiResponse = ai as unknown as {
-      text?: string;
-      outputText?: string;
-      response?: {
-        candidates?: Array<{
-          content?: {
-            parts?: Array<{ text?: string }>;
-          };
-        }>;
-      };
-    };
+    if (!responseText) {
+      throw new Error('No text content received from the model');
+    }
 
-    const responseText =
-      aiResponse.text ||
-      aiResponse.outputText ||
-      aiResponse.response?.candidates?.[0]?.content?.parts
-        ?.map((p) => p.text || '')
-        .join('\n') ||
-      '';
+    console.log('✅ AI Response received (Gemini 3.0 Flash):', responseText.substring(0, 200) + '...');
 
     let analysisResult: Record<string, unknown>;
 
+    // ===== Parse JSON Response =====
     try {
-      let jsonText = String(responseText);
-      const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) jsonText = jsonMatch[0];
-      analysisResult = JSON.parse(jsonText);
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError);
-      console.error('AI Response (raw):', responseText);
+      let jsonText = responseText.trim();
+      
+      // Cleanup markdown formatting if present
+      if (jsonText.startsWith('```json')) {
+        jsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (jsonText.startsWith('```')) {
+        jsonText = jsonText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
 
-      // Fallback JSON if Gemini does something stupid
+      analysisResult = JSON.parse(jsonText);
+      console.log('✅ JSON parsed successfully');
+      
+    } catch (parseError) {
+      console.error('❌ JSON parse error:', parseError);
+      console.error('Raw response:', responseText);
+      
+      // Return structured error
       analysisResult = {
-        patientInfo: { name: null, age: null, gender: null, reportDate: null },
-        testResults: [
-          {
-            category: 'Unable to Parse',
-            tests: [
-              {
-                testName: 'Error',
-                value: 'Could not extract data',
-                unit: '',
-                referenceRange: '',
-                status: 'unknown',
-              },
-            ],
-          },
-        ],
-        cancerRiskAssessment: {
-          overallRisk: 'unable_to_determine',
-          riskFactors: [],
-          cancerTypes: [],
-          recommendations: ['Please upload a clearer report'],
-        },
-        otherHealthRisks: [],
-        insights: ['Unable to process report format'],
-        overallAssessment: 'Please try uploading a clearer or different format of your blood report',
+        patientInfo: { name: null },
+        testResults: [],
+        insights: ['Error parsing AI response. The model may have returned invalid JSON.'],
+        overallAssessment: 'Failed to process report structure.',
+        error: 'PARSE_ERROR'
       };
     }
 
-    if (
-      !analysisResult?.testResults ||
-      (Array.isArray(analysisResult.testResults) && analysisResult.testResults.length === 0)
-    ) {
+    // ===== Validate Results =====
+    const hasResults = Array.isArray((analysisResult as any).testResults) 
+                       && (analysisResult as any).testResults.length > 0;
+    
+    if (!hasResults && !(analysisResult as any).error) {
       return NextResponse.json(
-        { error: 'No test data could be extracted from the report.' },
+        { error: 'No test data could be extracted. Ensure the image/PDF is a clear blood report with readable text.' },
         { status: 400 }
       );
     }
 
-    // Save report to database (if user logged in)
+    // ===== Save to Database =====
     let reportId: string | null = null;
     try {
       const token = req.cookies.get('token')?.value;
+      
       if (token) {
         const decoded = jwt.verify(token, process.env.TOKEN_SECRET!) as { id: string };
         const userId = decoded.id;
@@ -276,13 +292,16 @@ export async function POST(req: NextRequest) {
 
         await report.save();
         reportId = report._id.toString();
-        console.log('Blood report saved:', reportId);
+        console.log('Blood report saved to database:', reportId);
+      } else {
+        console.log('No auth token - report not saved to database');
       }
     } catch (saveError) {
-      console.error('Failed to save report:', saveError);
-      // don't fail the whole request just because save failed
+      console.error('⚠️ Failed to save report (non-fatal):', saveError);
+      // Continue execution - database save is not critical
     }
 
+    // ===== Return Success Response =====
     return NextResponse.json({
       success: true,
       data: analysisResult,
@@ -292,17 +311,44 @@ export async function POST(req: NextRequest) {
         fileSize: file.size,
         fileType: file.type,
         processedAt: new Date().toISOString(),
-        ocrMethod: 'gemini-3-pro-inline',
+        model: 'gemini-3-flash-preview',
+        processingMode: isTextMode ? 'text-extraction' : 'vision-analysis',
+        sdkVersion: '@google/genai',
+        pdfParser: 'pdf-parse@2.x (PDFParse class)'
       },
     });
-  } catch (error: unknown) {
-    console.error('Blood analyzer API error:', error);
+
+  } catch (error: any) {
+    console.error('❌ Blood analyzer error:', error);
+    
+    // Handle specific API errors
+    if (error.message?.includes('API key')) {
+      return NextResponse.json(
+        { 
+          error: 'Invalid or missing API key',
+          details: 'Please check your GEMINI_API_KEY environment variable',
+          timestamp: new Date().toISOString()
+        },
+        { status: 401 }
+      );
+    }
+
+    if (error.message?.includes('quota') || error.message?.includes('rate limit')) {
+      return NextResponse.json(
+        { 
+          error: 'API quota exceeded',
+          details: 'Rate limit reached. Please try again later.',
+          timestamp: new Date().toISOString()
+        },
+        { status: 429 }
+      );
+    }
+    
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to process the file',
-        details:
-          'Make sure GEMINI_API_KEY is set and that your @google/genai version supports inlineData for files.',
+      { 
+        error: 'Internal server error during analysis',
+        details: error.message || 'Unknown error',
+        timestamp: new Date().toISOString()
       },
       { status: 500 }
     );

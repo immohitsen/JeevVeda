@@ -40,6 +40,12 @@ export async function GET(
       );
     }
 
+    console.log(`[API] Fetched report ${id}:`, {
+      type: (report as any).reportType,
+      hasData: !!(report as any).reportData,
+      keys: (report as any).reportData ? Object.keys((report as any).reportData) : []
+    });
+
     return NextResponse.json({
       success: true,
       report

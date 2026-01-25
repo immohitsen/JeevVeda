@@ -25,13 +25,9 @@ interface RiskFactors {
   radiation_exposure: string;
   family_cancer_history: string;
   family_cancer_details: string;
-  symptom_bowel_bladder: string;
-  symptom_sore: string;
-  symptom_bleeding: string;
-  symptom_lump: string;
-  symptom_swallowing: string;
-  symptom_mole_change: string;
-  symptom_cough: string;
+  symptom_digestive_swallowing: string;
+  symptom_bleeding_cough: string;
+  symptom_skin_lumps: string;
   [key: string]: string;
 }
 

@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File
 
     // Forward the request to the actual API
-    const response = await fetch('https://resnet-50-jv.onrender.com/predict', {
+    const response = await fetch(`${process.env.FASTAPI}`, {
       method: 'POST',
       body: formData,
     })

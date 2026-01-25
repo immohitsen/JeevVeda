@@ -12,7 +12,6 @@ const navigationItems = [
       { icon: MessageCircle, label: "Chatbot", url: "/dashboard/chatbot" },
       { icon: Scan, label: "Screening Tools", url: "/dashboard/screening-tools" },
       { icon: ClipboardList, label: "Reports", url: "/dashboard/reports" },
-      { icon: UserCircle, label: "Profile", url: "/dashboard/profile" },
     ]
   },
   {
@@ -21,12 +20,6 @@ const navigationItems = [
       { icon: ActivitySquare, label: "Blood Analyzer", url: "/dashboard/blood-analyzer" },
       { icon: History, label: "Report History", url: "/dashboard/report-history" },
       { icon: Shield, label: "Screening Recs", url: "/dashboard/screening-recs" },
-    ]
-  },
-  {
-    title: "Help",
-    items: [
-      { icon: Clock, label: "Help Center", url: "/dashboard/help" },
     ]
   }
 ];
@@ -77,15 +70,13 @@ export function AppSidebar({ onClose }: AppSidebarProps) {
                 <button
                   key={item.label}
                   onClick={() => handleNavigation(item.url)}
-                  className={`group w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
-                    isActive(item.url) 
-                      ? 'bg-gray-900 text-white shadow-sm' 
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
+                  className={`group w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${isActive(item.url)
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
                 >
-                  <item.icon className={`h-4 w-4 transition-colors ${
-                    isActive(item.url) ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'
-                  }`} />
+                  <item.icon className={`h-4 w-4 transition-colors ${isActive(item.url) ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'
+                    }`} />
                   <span>{item.label}</span>
                 </button>
               ))}

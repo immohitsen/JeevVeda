@@ -13,8 +13,10 @@ import {
   TrendingUp,
   Activity,
   Loader2,
+  FileDigit,
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { useRouter } from "next/navigation";
+
 
 /* ===== Types aligned with API ===== */
 interface PatientInfo {
@@ -39,7 +41,7 @@ interface TestCategory {
   tests: TestResult[];
 }
 
-type RiskLevel = "low" | "moderate" | "high";
+type RiskLevel = "low" | "moderate" | "high" | "low_to_moderate";
 type OverallCancerRisk = RiskLevel | "unable_to_determine";
 
 interface CancerRiskFactor {
@@ -85,7 +87,9 @@ export default function BloodAnalyzerPage() {
   const [results, setResults] = useState<BloodAnalysisResults | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [processingPhase, setProcessingPhase] = useState("");
+  const [reportId, setReportId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const handleFileSelect = (file: File | undefined) => {
     if (!file) return;
@@ -107,6 +111,7 @@ export default function BloodAnalyzerPage() {
     setSelectedFile(file);
     setError(null);
     setResults(null);
+    setReportId(null);
   };
 
   const analyzeReport = async () => {
@@ -162,8 +167,12 @@ export default function BloodAnalyzerPage() {
         throw new Error(errorMsg + details);
       }
 
+      console.log('Received data from API:', data);
+      console.log('Patient info:', data.data?.patientInfo);
+
       // ✅ data.data is the JSON produced by the backend
       setResults(data.data as BloodAnalysisResults);
+      if (data.reportId) setReportId(data.reportId);
     } catch (e: unknown) {
       clearInterval(phaseInterval);
       console.error("Analysis failed:", e);
@@ -210,6 +219,7 @@ export default function BloodAnalyzerPage() {
     switch (risk) {
       case "low":
         return "text-green-700 bg-green-100 border-green-200";
+      case "low_to_moderate":
       case "moderate":
         return "text-orange-700 bg-orange-100 border-orange-200";
       case "high":
@@ -223,6 +233,7 @@ export default function BloodAnalyzerPage() {
     switch (risk) {
       case "low":
         return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case "low_to_moderate":
       case "moderate":
       case "high":
         return <AlertTriangle className="w-4 h-4 text-orange-600" />;
@@ -257,114 +268,57 @@ export default function BloodAnalyzerPage() {
 
   if (processing) {
     return (
-      <motion.div
-        className="p-4 sm:p-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <motion.div
-          className="bg-white rounded-xl p-6 sm:p-8 shadow-sm border border-gray-100 text-center max-w-2xl mx-auto"
-          initial={{ scale: 0.9, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <motion.div
-            className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          >
-            <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 animate-spin" />
-          </motion.div>
-          <motion.h2
-            className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            Processing Your Report
-          </motion.h2>
-          <motion.p
-            className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            {processingPhase}
-          </motion.p>
-          <motion.div
-            className="w-full bg-gray-200 rounded-full h-2"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.5 }}
-          >
-            <motion.div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-500"
-              style={{ width: "66%" }}
-              initial={{ width: 0 }}
-              animate={{ width: "66%" }}
-              transition={{ delay: 0.7, duration: 1 }}
+      <div className="min-h-[400px] flex items-center justify-center p-8">
+        <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 text-center max-w-lg w-full">
+          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+          </div>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+            Processing Report
+          </h2>
+          <p className="text-gray-600 mb-8">{processingPhase}</p>
+
+          <div className="w-full bg-gray-100 rounded-full h-2 mb-4 overflow-hidden">
+            <div
+              className="bg-blue-600 h-2 rounded-full animate-pulse"
+              style={{ width: "60%" }}
             />
-          </motion.div>
-          <motion.p
-            className="text-xs sm:text-sm text-gray-500 mt-3 sm:mt-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-          >
+          </div>
+
+          <p className="text-sm text-gray-500">
             {selectedFile?.type === "application/pdf"
-              ? "PDF processing may take 60–90 seconds"
-              : "OCR processing may take 30–60 seconds"}
-          </motion.p>
-        </motion.div>
-      </motion.div>
+              ? "Analyzing PDF document structure..."
+              : "Reading image content..."}
+          </p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <motion.div
-      className="p-4 sm:p-8 space-y-4 sm:space-y-6"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div className="p-4 sm:p-8 space-y-8 max-w-5xl mx-auto">
       {/* Header */}
-      <motion.div
-        className="flex items-center gap-3 sm:gap-4"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-      >
-        <motion.div
-          className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center"
-          whileHover={{ rotate: 10, scale: 1.1 }}
-          transition={{ type: "spring", stiffness: 300 }}
-        >
-          <Brain className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-        </motion.div>
+      <div className="flex items-center gap-4 border-b border-gray-100 pb-6">
+        <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+          <Brain className="w-6 h-6 text-blue-600" />
+        </div>
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Blood Report Analyzer</h1>
-          <p className="text-sm sm:text-base text-gray-600">
-            Upload your blood test report for AI-powered analysis
+          <h1 className="text-2xl font-bold text-gray-900">Blood Report Analyzer</h1>
+          <p className="text-gray-600">
+            AI-powered clinical analysis engine
           </p>
         </div>
-      </motion.div>
+      </div>
 
       {/* Upload Area */}
-      <motion.div
-        className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        whileHover={{ scale: 1.02 }}
-      >
-        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
-          Upload Blood Report
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Upload Report
         </h2>
 
         {!selectedFile ? (
-          <motion.div
-            className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-8 text-center cursor-pointer hover:border-blue-400 transition-colors"
+          <div
+            className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50/10 transition-colors"
             onClick={() => fileInputRef.current?.click()}
             onDragOver={(e) => {
               e.preventDefault();
@@ -376,104 +330,61 @@ export default function BloodAnalyzerPage() {
               const file = e.dataTransfer?.files?.[0];
               if (file) handleFileSelect(file);
             }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 300 }}
           >
-            <motion.div
-              className="flex justify-center gap-3 sm:gap-4 mb-3 sm:mb-4"
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
-            >
-              <FileImage className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
-              <span className="text-sm sm:text-base text-gray-400">or</span>
-              <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
-            </motion.div>
-            <p className="text-base sm:text-lg font-medium mb-1 sm:mb-2">
-              Drop your blood report here or click to browse
+            <div className="flex justify-center gap-4 mb-4">
+              <FileImage className="w-8 h-8 text-gray-400" />
+              <div className="h-8 w-[1px] bg-gray-200"></div>
+              <FileText className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-lg font-medium text-gray-900 mb-2">
+              Drag & drop or browse
             </p>
-            <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
-              JPG, PNG, PDF • Max 10MB (images), 15MB (PDF)
+            <p className="text-sm text-gray-500 mb-4">
+              Supports PDF, JPG, PNG up to 15MB
             </p>
-            <motion.div
-              className="text-xs sm:text-sm text-gray-400 bg-gray-50 p-3 rounded-lg"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <p className="font-medium mb-1">💡 For best results:</p>
-              <p>
-                • <strong>Images (JPG/PNG):</strong> Clear, high-resolution photos
-                work best
-              </p>
-              <p>
-                • <strong>PDFs:</strong> Text-based PDFs preferred (not scanned
-                documents)
-              </p>
-              <p>• If PDF fails, try uploading as an image instead</p>
-            </motion.div>
-            <motion.button
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 mt-3 sm:mt-4 text-sm sm:text-base"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
+
+            <button className="px-6 cursor-pointer py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm">
               Select File
-            </motion.button>
-          </motion.div>
+            </button>
+
+            <div className="mt-6 flex flex-col items-center gap-2 text-sm text-gray-400">
+              <p>• High-resolution images work best</p>
+              <p>• Text-based PDFs preferred over scanned</p>
+            </div>
+          </div>
         ) : (
-          <motion.div
-            className="space-y-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <motion.div
-              className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg"
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <motion.div
-                className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center"
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
+          <div className="space-y-6">
+            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <div className="w-12 h-12 bg-white rounded-lg border border-gray-200 flex items-center justify-center">
                 {selectedFile.type === "application/pdf" ? (
-                  <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                  <FileText className="w-6 h-6 text-red-500" />
                 ) : (
-                  <FileImage className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                  <FileImage className="w-6 h-6 text-blue-500" />
                 )}
-              </motion.div>
+              </div>
               <div className="flex-1">
-                <p className="text-sm sm:text-base font-medium truncate">{selectedFile.name}</p>
-                <p className="text-xs sm:text-sm text-gray-500">
-                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB •{" "}
-                  {selectedFile.type === "application/pdf"
-                    ? "PDF Document"
-                    : "Image File"}
+                <p className="font-medium text-gray-900 truncate">{selectedFile.name}</p>
+                <p className="text-sm text-gray-500">
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
               </div>
-              <motion.button
+              <button
                 onClick={() => setSelectedFile(null)}
-                className="p-1 hover:bg-gray-200 rounded"
-                whileHover={{ scale: 1.1, rotate: 90 }}
-                whileTap={{ scale: 0.9 }}
+                className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-500"
               >
-                <X className="w-4 h-4" />
-              </motion.button>
-            </motion.div>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            <motion.button
+            <button
               onClick={analyzeReport}
               disabled={processing}
-              className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2 text-sm sm:text-base"
-              whileHover={{ scale: processing ? 1 : 1.05 }}
-              whileTap={{ scale: processing ? 1 : 0.95 }}
+              className="w-full py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium transition-colors"
             >
               <Brain className="w-5 h-5" />
               Analyze Report
-            </motion.button>
-          </motion.div>
+            </button>
+          </div>
         )}
 
         <input
@@ -484,465 +395,229 @@ export default function BloodAnalyzerPage() {
           className="hidden"
         />
 
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              className="mt-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded flex items-start gap-3"
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ duration: 0.3 }}
-            >
-              <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-red-700 font-medium text-sm sm:text-base">Analysis Failed</p>
-                <div className="text-red-600 text-xs sm:text-sm mt-1 whitespace-pre-line">
-                  {error}
-                </div>
-                {(error.includes("scanned") || error.includes("image-based")) && (
-                  <motion.div
-                    className="mt-3 p-2 sm:p-3 bg-blue-50 border border-blue-200 rounded"
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    <p className="text-blue-700 text-xs sm:text-sm font-medium">
-                      💡 Suggested Solution:
-                    </p>
-                    <p className="text-blue-600 text-xs sm:text-sm mt-1">
-                      Take a clear photo of your blood report and upload it as JPG
-                      or PNG instead.
-                    </p>
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+        {error && (
+          <div className="mt-6 p-4 bg-red-50 border border-red-100 rounded-lg flex items-start gap-3 text-sm">
+            <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
+            <div className="text-red-700">
+              <p className="font-semibold">Analysis Failed</p>
+              <p className="mt-1">{error}</p>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Results */}
-      <AnimatePresence>
-        {results && (
-          <motion.div
-            className="space-y-4 sm:space-y-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
-          >
-            {/* Header */}
-            <motion.div
-              className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <motion.div
-                className="flex items-center gap-3 mb-4 sm:mb-6"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
-                >
-                  <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
-                </motion.div>
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                    Analysis Complete
-                  </h2>
-                  <p className="text-sm sm:text-base text-gray-600">Report processed successfully</p>
-                </div>
-              </motion.div>
+      {results && (
+        <div className="space-y-8 animate-in fade-in duration-500">
 
-              {/* Patient Info */}
-              <motion.div
-                className="grid sm:grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <motion.div
-                  className="bg-blue-50 p-3 sm:p-4 rounded-lg"
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <h3 className="text-sm sm:text-base font-medium text-blue-900 mb-2 sm:mb-3">
-                    Patient Information
-                  </h3>
-                  <div className="space-y-1 sm:space-y-2">
-                    <p className="text-xs sm:text-sm">
-                      <span className="text-blue-700 font-medium">Name:</span>{" "}
-                      {results.patientInfo?.name ?? "Not specified"}
-                    </p>
-                    <p className="text-xs sm:text-sm">
-                      <span className="text-blue-700 font-medium">Age:</span>{" "}
-                      {results.patientInfo?.age ?? "Not specified"}
-                    </p>
-                    <p className="text-xs sm:text-sm">
-                      <span className="text-blue-700 font-medium">Gender:</span>{" "}
-                      {results.patientInfo?.gender ?? "Not specified"}
-                    </p>
-                    <p className="text-xs sm:text-sm">
-                      <span className="text-blue-700 font-medium">Date:</span>{" "}
-                      {results.patientInfo?.reportDate ?? "Not specified"}
-                    </p>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  className="bg-green-50 p-3 sm:p-4 rounded-lg"
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <h3 className="text-sm sm:text-base font-medium text-green-900 mb-2 sm:mb-3">
-                    Overall Assessment
-                  </h3>
-                  <p className="text-xs sm:text-sm text-green-800">
-                    {results.overallAssessment || "Assessment completed"}
-                  </p>
-                </motion.div>
-
-                <motion.div
-                  className={`p-3 sm:p-4 rounded-lg border ${
-                    results.cancerRiskAssessment?.overallRisk
-                      ? getRiskColor(results.cancerRiskAssessment.overallRisk)
-                      : "bg-gray-50"
-                  }`}
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <h3 className="text-sm sm:text-base font-medium mb-2 sm:mb-3">Cancer Risk Assessment</h3>
-                  <div className="flex items-center gap-2 mb-1 sm:mb-2">
-                    {results.cancerRiskAssessment?.overallRisk &&
-                      getRiskIcon(results.cancerRiskAssessment.overallRisk)}
-                    <span className="text-xs sm:text-sm font-semibold">
-                      {results.cancerRiskAssessment?.overallRisk
-                        ? String(
-                            results.cancerRiskAssessment.overallRisk
-                          ).toUpperCase()
-                        : "UNABLE TO DETERMINE"}
-                    </span>
-                  </div>
-                  <p className="text-xs sm:text-sm">
-                    {results.cancerRiskAssessment?.overallRisk === "low" &&
-                      "Blood parameters show minimal cancer risk indicators"}
-                    {results.cancerRiskAssessment?.overallRisk === "moderate" &&
-                      "Some parameters warrant monitoring and follow-up"}
-                    {results.cancerRiskAssessment?.overallRisk === "high" &&
-                      "Multiple risk indicators present - consultation recommended"}
-                    {results.cancerRiskAssessment?.overallRisk ===
-                      "unable_to_determine" &&
-                      "Insufficient data for accurate cancer risk assessment"}
-                  </p>
-                </motion.div>
-              </motion.div>
-            </motion.div>
-
-            {/* Test Results */}
-            {results.testResults && results.testResults.length > 0 && (
-              <motion.div
-                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
-              >
-                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-                    Test Results
-                  </h3>
-                </div>
-
-                <div className="divide-y divide-gray-200">
-                  {results.testResults.map((category, categoryIndex) => (
-                    <motion.div
-                      key={categoryIndex}
-                      className="p-3 sm:p-6"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.6 + categoryIndex * 0.1 }}
-                    >
-                      <h4 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">
-                        {category.category || "Tests"}
-                      </h4>
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                Test
-                              </th>
-                              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                Value
-                              </th>
-                              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">
-                                Reference
-                              </th>
-                              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                Status
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-200">
-                            {category.tests?.map((test, testIndex) => (
-                              <motion.tr
-                                key={testIndex}
-                                className="hover:bg-gray-50"
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.7 + testIndex * 0.05 }}
-                              >
-                                <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-gray-900">
-                                  {test.testName}
-                                </td>
-                                <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900">
-                                  {String(test.value)} {test.unit}
-                                </td>
-                                <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-600 hidden sm:table-cell">
-                                  {test.referenceRange || "Not provided"}
-                                </td>
-                                <td className="px-2 sm:px-4 py-2 sm:py-3">
-                                  <div className="flex items-center gap-1 sm:gap-2">
-                                    {getStatusIcon(test.status)}
-                                    <span
-                                      className={`inline-flex px-1 sm:px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                                        test.status
-                                      )}`}
-                                    >
-                                      <span className="hidden sm:inline">
-                                        {test.status
-                                          .charAt(0)
-                                          .toUpperCase() + test.status.slice(1)}
-                                      </span>
-                                      <span className="sm:hidden">
-                                        {test.status.charAt(0).toUpperCase()}
-                                      </span>
-                                    </span>
-                                  </div>
-                                </td>
-                              </motion.tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-          {/* Cancer Risk Assessment Details */}
-          {results.cancerRiskAssessment && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 bg-red-50">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-red-600" />
-                  Detailed Cancer Risk Assessment
-                </h3>
-              </div>
-
-              <div className="p-6 space-y-6">
-                {/* Cancer Types */}
-                {results.cancerRiskAssessment.cancerTypes?.length ? (
-                  <div>
-                    <h4 className="text-md font-semibold text-gray-900 mb-3">
-                      Cancer Type Risks
-                    </h4>
-                    <div className="grid gap-4">
-                      {results.cancerRiskAssessment.cancerTypes.map(
-                        (cancer, index) => (
-                          <div
-                            key={index}
-                            className={`p-4 rounded-lg border ${getRiskColor(
-                              cancer.riskLevel
-                            )}`}
-                          >
-                            <div className="flex items-center gap-2 mb-2">
-                              {getRiskIcon(cancer.riskLevel)}
-                              <h5 className="font-medium">{cancer.type}</h5>
-                              <span
-                                className={`px-2 py-1 text-xs font-semibold rounded-full ${getRiskColor(
-                                  cancer.riskLevel
-                                )}`}
-                              >
-                                {cancer.riskLevel.toUpperCase()}
-                              </span>
-                            </div>
-                            <div className="text-sm">
-                              <strong>Indicators:</strong>{" "}
-                              {cancer.indicators.join(", ")}
-                            </div>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-
-                {/* Risk Factors */}
-                {results.cancerRiskAssessment.riskFactors?.length ? (
-                  <div>
-                    <h4 className="text-md font-semibold text-gray-900 mb-3">
-                      Risk Factors
-                    </h4>
-                    <div className="space-y-3">
-                      {results.cancerRiskAssessment.riskFactors.map(
-                        (factor, index) => (
-                          <div
-                            key={index}
-                            className={`p-3 rounded-lg border ${getRiskColor(
-                              factor.riskLevel
-                            )}`}
-                          >
-                            <div className="flex items-center gap-2 mb-1">
-                              {getRiskIcon(factor.riskLevel)}
-                              <strong className="text-sm">
-                                {factor.factor}:
-                              </strong>
-                              <span className="text-sm">{factor.value}</span>
-                              <span
-                                className={`px-2 py-1 text-xs font-semibold rounded-full ${getRiskColor(
-                                  factor.riskLevel
-                                )}`}
-                              >
-                                {factor.riskLevel.toUpperCase()}
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-600 ml-6">
-                              {factor.significance}
-                            </p>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-
-                {/* Recommendations */}
-                {results.cancerRiskAssessment.recommendations?.length ? (
-                  <div>
-                    <h4 className="text-md font-semibold text-gray-900 mb-3">
-                      Recommendations
-                    </h4>
-                    <div className="space-y-2">
-                      {results.cancerRiskAssessment.recommendations.map(
-                        (rec, index) => (
-                          <div
-                            key={index}
-                            className="flex items-start gap-2"
-                          >
-                            <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                            <p className="text-sm text-gray-700">{rec}</p>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
+          {/* Status Header */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex items-center gap-4">
+            <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center flex-shrink-0">
+              <CheckCircle className="w-6 h-6 text-green-600" />
             </div>
-          )}
-
-          {/* Other Health Risks */}
-          {results.otherHealthRisks?.length ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 bg-orange-50">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-orange-600" />
-                  Other Health Risk Assessment
-                </h3>
-              </div>
-
-              <div className="p-6">
-                <div className="grid gap-4">
-                  {results.otherHealthRisks.map((risk, index) => (
-                    <div
-                      key={index}
-                      className={`p-4 rounded-lg border ${getRiskColor(
-                        risk.risk
-                      )}`}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        {getRiskIcon(risk.risk)}
-                        <h4 className="font-medium">{risk.condition}</h4>
-                        <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full ${getRiskColor(
-                            risk.risk
-                          )}`}
-                        >
-                          {risk.risk.toUpperCase()} RISK
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-700 mb-2">
-                        {risk.description}
-                      </p>
-                      <div className="text-sm">
-                        <strong>Key indicators:</strong>{" "}
-                        {risk.indicators.join(", ")}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                Analysis Complete
+              </h2>
+              <p className="text-gray-600">Report processed successfully</p>
             </div>
-          ) : null}
+          </div>
 
-          {/* AI Insights */}
-          {results.insights?.length ? (
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Brain className="w-5 h-5 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  AI Insights
-                </h3>
-              </div>
+          {/* Patient Info & Assessment Grid */}
+          <div className="grid sm:grid-cols-3 gap-6">
+            {/* Patient Info */}
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                Patient Details
+              </h3>
               <div className="space-y-3">
-                {results.insights.map((insight, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
-                    <p className="text-gray-700">{insight}</p>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 text-base">Name</span>
+                  <span className="font-medium text-gray-900 text-base">{results.patientInfo?.name || "-"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 text-base">Age/Gender</span>
+                  <span className="font-medium text-gray-900 text-base">
+                    {results.patientInfo?.age || "-"}/{results.patientInfo?.gender || "-"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 text-base">Date</span>
+                  <span className="font-medium text-gray-900 text-base">{results.patientInfo?.reportDate || "-"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Overall Assessment */}
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                Overall Assessment
+              </h3>
+              <p className="text-base text-gray-800 leading-relaxed font-medium">
+                {results.overallAssessment || "Assessment completed."}
+              </p>
+            </div>
+
+            {/* Risk Summary */}
+            <div className={`p-5 rounded-xl border shadow-sm ${!results.cancerRiskAssessment?.overallRisk || results.cancerRiskAssessment.overallRisk === "low"
+              ? "bg-green-50 border-green-200 text-green-900"
+              : getRiskColor(results.cancerRiskAssessment.overallRisk)
+              }`}>
+              <h3 className="text-sm font-semibold uppercase tracking-wider mb-4 opacity-80">
+                Cancer Risk Profile
+              </h3>
+
+              <div className="flex items-center gap-3 mb-2">
+                {(!results.cancerRiskAssessment?.overallRisk || results.cancerRiskAssessment.overallRisk === "low") ? (
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                ) : (
+                  getRiskIcon(results.cancerRiskAssessment.overallRisk)
+                )}
+                <span className="text-lg font-bold">
+                  {results.cancerRiskAssessment?.overallRisk && results.cancerRiskAssessment.overallRisk !== "unable_to_determine"
+                    ? String(results.cancerRiskAssessment.overallRisk).replace(/_/g, ' ').toUpperCase()
+                    : "NO IMMEDIATE RISK DETECTED"}
+                </span>
+              </div>
+              <p className="text-sm mt-2 opacity-90">
+                {results.cancerRiskAssessment?.overallRisk === "low" || !results.cancerRiskAssessment?.overallRisk
+                  ? "No tumor markers or specific cancer indicators were found in this report."
+                  : "Please review the detailed risk factors below."}
+              </p>
+            </div>
+          </div>
+
+          {/* Test Results Table */}
+          {results.testResults && results.testResults.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
+                <h3 className="font-semibold text-gray-900">
+                  Detailed Test Results
+                </h3>
+              </div>
+
+              <div className="divide-y divide-gray-100">
+                {results.testResults.map((category, categoryIndex) => (
+                  <div key={categoryIndex} className="p-6">
+                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                      {category.category || "General Tests"}
+                    </h4>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left py-3 px-4 font-medium text-gray-500 text-sm">Test Name</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-500 text-sm">Value</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-500 text-sm hidden sm:table-cell">Reference</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-500 text-sm">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {category.tests?.map((test, testIndex) => (
+                            <tr key={testIndex} className="hover:bg-gray-50/50 transition-colors">
+                              <td className="py-3 px-4 font-medium text-gray-900 text-base">{test.testName}</td>
+                              <td className="py-3 px-4 font-mono text-gray-700 text-base">{String(test.value)} <span className="text-gray-400 text-sm">{test.unit}</span></td>
+                              <td className="py-3 px-4 text-gray-500 text-base hidden sm:table-cell">{test.referenceRange || "-"}</td>
+                              <td className="py-3 px-4">
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(test.status)}`}>
+                                  {test.status === 'normal' || test.status === 'low' || test.status === 'high' || test.status === 'critical'
+                                    ? null
+                                    : <Activity className="w-3 h-3" />}
+                                  {test.status ? test.status.toUpperCase() : "UNKNOWN"}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
-          ) : null}
+          )}
 
-            {/* Action Buttons */}
-            <motion.div
-              className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.0 }}
+          {/* Detailed Risk Analysis */}
+          {results.cancerRiskAssessment && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-2 bg-red-50/50">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+                <h3 className="font-semibold text-gray-900">Detailed Risk Factors</h3>
+              </div>
+
+              <div className="p-6 grid md:grid-cols-2 gap-8">
+                {/* Risk Factors */}
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-4 border-b pb-2">Identified Risk Factors</h4>
+                  {results.cancerRiskAssessment.riskFactors?.length ? (
+                    <ul className="space-y-4">
+                      {results.cancerRiskAssessment.riskFactors.map((factor, idx) => (
+                        <li key={idx} className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="font-medium text-gray-900">{factor.factor}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full uppercase font-bold ${getRiskColor(factor.riskLevel)}`}>
+                              {factor.riskLevel}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600">{factor.significance}</p>
+                          <div className="text-sm text-gray-500 mt-2 font-mono">Value: {factor.value}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">No specific risk factors identified.</p>
+                  )}
+                </div>
+
+                {/* Recommendations */}
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-4 border-b pb-2">AI Recommendations</h4>
+                  {results.cancerRiskAssessment.recommendations?.length ? (
+                    <ul className="space-y-3">
+                      {results.cancerRiskAssessment.recommendations.map((rec, idx) => (
+                        <li key={idx} className="flex gap-3 text-sm text-gray-700">
+                          <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                          <span>{rec}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">No specific recommendations.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex justify-center gap-4 pt-4 pb-8">
+            <button
+              onClick={downloadReport}
+              className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-900 font-medium transition-colors shadow-sm"
             >
-              <motion.button
-                onClick={downloadReport}
-                className="px-4 sm:px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2 text-sm sm:text-base"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <Download className="w-4 h-4" />
+              Download JSON
+            </button>
+            {reportId && (
+              <button
+                onClick={() => router.push(`/dashboard/report/${reportId}`)}
+                className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-900 font-medium transition-colors shadow-sm"
               >
-                <Download className="w-4 h-4" />
-                <span className="hidden sm:inline">Download Report</span>
-                <span className="sm:hidden">Download</span>
-              </motion.button>
-              <motion.button
-                onClick={resetAnalyzer}
-                className="px-4 sm:px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <span className="hidden sm:inline">Analyze Another Report</span>
-                <span className="sm:hidden">New Analysis</span>
-              </motion.button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+                <FileText className="w-4 h-4" />
+                View Full Report
+              </button>
+            )}
+            <button
+              onClick={resetAnalyzer}
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors shadow-sm"
+            >
+              Analyze New Report
+            </button>
+          </div>
+
+        </div>
+      )}
+    </div>
   );
 }

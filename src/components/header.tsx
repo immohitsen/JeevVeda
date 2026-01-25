@@ -59,7 +59,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   }, [])
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between bg-white px-6 border-b border-neutral-200">
+    <header className="flex h-16 shrink-0 items-center justify-between bg-white px-6">
       <div className="flex items-center gap-3">
         <button
           className="p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-xl transition-colors lg:hidden"

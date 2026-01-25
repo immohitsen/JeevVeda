@@ -1,8 +1,10 @@
 "use client"
 
+import React, { useState, useEffect } from "react"
 import { useUser } from "@/hooks/useUser"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/professional-button"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Activity,
   Scan,
@@ -14,9 +16,34 @@ import {
   CheckCircle,
   ArrowRight,
   Zap,
-  Target
+  Target,
+  Sparkles,
+  ChevronRight,
+  Menu,
+  Clock
 } from "lucide-react"
-import { useState, useEffect } from "react"
+import { motion, AnimatePresence, type Variants } from "motion/react"
+import { cn } from "@/lib/utils"
+
+// Animation variants
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+}
+
+const itemVariants: Variants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { type: "spring", stiffness: 300, damping: 24 }
+  }
+}
 
 interface ReportData {
   _id: string;
@@ -36,6 +63,8 @@ interface ReportData {
 export default function Dashboard() {
   const { user, loading } = useUser()
   const router = useRouter()
+  // Use separate state for mounted to handle hydration mismatch
+  const [mounted, setMounted] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [recentReports, setRecentReports] = useState<Array<{
     id: string;
@@ -50,8 +79,10 @@ export default function Dashboard() {
   const [loadingReports, setLoadingReports] = useState(true)
   const [totalReports, setTotalReports] = useState(0)
 
+  // Handle mounting and time
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
+    setMounted(true)
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000) // Update every minute is enough
     return () => clearInterval(timer)
   }, [])
 
@@ -119,378 +150,403 @@ export default function Dashboard() {
     }
   }, [user])
 
-  // Calculate health metrics from real data
-  const healthMetrics = {
-    overallRisk: recentReports.length > 0 ? recentReports[0].riskLevel : "Unknown",
-    lastScreening: recentReports.length > 0 ? new Date(recentReports[0].date).toLocaleDateString() : "No data",
-    upcomingAppointments: 0,
-    reportsGenerated: totalReports
+  // Calculate real health metrics
+  const [healthMetrics, setHealthMetrics] = useState({
+    wellnessScore: 0,
+    wellnessColor: 'gray',
+    actionItems: 0,
+    totalReports: 0,
+    lastScreening: "No data",
+    riskLevel: "Unknown"
+  })
+
+  // Update metrics when reports change
+  useEffect(() => {
+    if (recentReports.length > 0) {
+      // 1. Calculate Wellness Score (Avg of last 3)
+      const last3 = recentReports.slice(0, 3)
+      let totalScore = 0
+
+      last3.forEach(report => {
+        if (report.riskLevel === 'Low' || report.status === 'Normal') totalScore += 100
+        else if (report.riskLevel === 'Medium' || report.riskLevel === 'Moderate') totalScore += 75
+        else if (report.riskLevel === 'High' || report.status === 'Review Required') totalScore += 50
+        else totalScore += 70 // Unknown
+      })
+
+      const wellnessScore = Math.round(totalScore / last3.length)
+      const wellnessColor = wellnessScore >= 90 ? 'emerald' : wellnessScore >= 70 ? 'amber' : 'red'
+
+      // 2. Count "Action Required" items (High risk or review needed)
+      let actionCount = 0
+      recentReports.forEach(report => {
+        if (report.riskLevel === 'High' || report.status === 'Review Required') {
+          actionCount++
+        }
+      })
+
+      setHealthMetrics({
+        wellnessScore,
+        wellnessColor,
+        actionItems: actionCount,
+        totalReports: totalReports, // Use the state variable directly
+        lastScreening: new Date(recentReports[0].date).toLocaleDateString(),
+        riskLevel: recentReports[0].riskLevel
+      })
+    }
+  }, [recentReports, totalReports]) // Added totalReports dependency
+
+
+
+  const getGreeting = () => {
+    const hrs = currentTime.getHours()
+    if (hrs < 12) return 'Good Morning'
+    if (hrs < 18) return 'Good Afternoon'
+    return 'Good Evening'
   }
 
-  if (loading) {
+  if (loading || !mounted) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-lg font-mono">Loading your health dashboard...</div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="space-y-4 text-center">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin"></div>
+          </div>
+          <p className="text-slate-500 font-medium animate-pulse">Initializing Dashboard...</p>
+        </div>
       </div>
     )
   }
 
+
   return (
-    <div className="min-h-screen bg-neutral-50">
-      {/* Header Section with Video */}
-      <div className="px-4 sm:px-6 py-6">
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="min-h-screen bg-slate-50/50"
+    >
+      {/* Background Decor Removed - Moved to Layout for performance */}
+
+      {/* Header Section */}
+      <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-start justify-between gap-6">
-            <div className="flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 mb-2">
-                Good {currentTime.getHours() < 12 ? 'morning' : currentTime.getHours() < 18 ? 'afternoon' : 'evening'}, {user?.fullName || 'User'}
+          <motion.div
+            variants={itemVariants}
+            className="flex flex-col md:flex-row md:items-center justify-between gap-6"
+          >
+            <div className="flex-1 space-y-1.5">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100/50 text-xs font-semibold text-emerald-600 tracking-wide uppercase"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                <span>AI Health Assistant Active</span>
+              </motion.div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-slate-800 tracking-tight">
+                {getGreeting()}, <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">{user?.fullName?.split(' ')[0] || 'User'}</span>
               </h1>
-              <p className="text-sm text-neutral-500">
+              <p className="text-slate-500 text-base font-medium">
                 {currentTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
               </p>
             </div>
-            <div className="flex-shrink-0">
+
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="relative group rounded-2xl overflow-hidden shadow-lg border-2 border-white"
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent z-10 pointer-events-none" />
               <video
                 autoPlay
                 loop
                 muted
                 playsInline
-                className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl object-cover border-2 border-neutral-900"
+                className="w-full h-32 md:w-48 md:h-28 object-cover bg-slate-900"
               >
-                <source src="/videos/stock/cancer-cells.mov" type="video/quicktime" />
-                <source src="/videos/stock/cancer-cells.mov" type="video/mp4" />
+                <source src="/videos/stock/cancer-cells.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
-            </div>
-          </div>
+              <div className="absolute bottom-2 right-2 z-20">
+                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]"></div>
+              </div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
 
-      {/* Banner Section - Health Insights */}
-      <div className="px-4 sm:px-6 mb-6">
+      {/* Main Content Info Cards */}
+      <div className="px-4 sm:px-6 lg:px-8 mb-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Main Banner Card - Health Insights */}
-            <div className="lg:col-span-2 bg-gradient-to-br from-neutral-900 to-neutral-700 rounded-2xl p-8 border border-neutral-200 text-white">
-              <div className="flex flex-col justify-between h-full">
-                <div>
-                  <h2 className="text-2xl sm:text-3xl font-bold mb-3">Your Health Journey</h2>
-                  <p className="text-neutral-200 text-base sm:text-lg mb-6">
-                    Stay ahead with AI-powered cancer detection and personalized health insights.
-                  </p>
-                </div>
-                <div className="grid grid-cols-3 gap-4 mt-6">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Heart className="w-5 h-5 text-green-400" />
-                      <p className="text-xs text-neutral-300">Health Score</p>
-                    </div>
-                    <p className="text-2xl font-bold">92%</p>
-                  </div>
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Shield className="w-5 h-5 text-blue-400" />
-                      <p className="text-xs text-neutral-300">Protected</p>
-                    </div>
-                    <p className="text-2xl font-bold">100%</p>
-                  </div>
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Activity className="w-5 h-5 text-red-400" />
-                      <p className="text-xs text-neutral-300">Active Days</p>
-                    </div>
-                    <p className="text-2xl font-bold">30</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            {/* Stats Card */}
-            <div className="bg-white rounded-2xl p-6 border border-neutral-200">
-              <div className="space-y-4">
-                <div>
-                  <p className="text-xs text-neutral-500 uppercase tracking-wide mb-1">Overall Risk</p>
-                  <p className="text-3xl font-bold text-neutral-900">{healthMetrics.overallRisk}</p>
+            {/* Hero Health Card */}
+            <motion.div
+              variants={itemVariants}
+              className="lg:col-span-2 relative overflow-hidden rounded-2xl bg-slate-900 text-white p-8 shadow-xl"
+            >
+              <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px] translate-y-1/3 -translate-x-1/3" />
+
+              <div className="relative z-10 h-full flex flex-col justify-between">
+                <div className="space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-2 rounded-xl bg-white/10 backdrop-blur-md">
+                      <Heart className="w-6 h-6 text-emerald-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold">Health Status</h2>
+                      <p className="text-white/60 text-sm">Real-time analysis</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-6 pt-2">
+                    <div className="space-y-1">
+                      <p className="text-sm text-white/50 uppercase tracking-wider font-semibold">Overall Score</p>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-4xl font-bold tracking-tight">{healthMetrics.wellnessScore}</span>
+                        <span className="text-sm text-emerald-400 font-medium">%</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1 border-l border-white/10 pl-8">
+                      <p className="text-sm text-white/50 uppercase tracking-wider font-semibold">Action Required</p>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className={cn("text-4xl font-bold tracking-tight",
+                          healthMetrics.actionItems > 0 ? "text-red-400" : "text-white"
+                        )}>{healthMetrics.actionItems}</span>
+                        <span className="text-sm text-white/60 font-medium">pending</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1 border-l border-white/10 pl-8">
+                      <p className="text-sm text-white/50 uppercase tracking-wider font-semibold">Total Reports</p>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-4xl font-bold tracking-tight">{healthMetrics.totalReports}</span>
+                        <span className="text-sm text-white/60 font-medium">docs</span>
+                      </div>
+
+                    </div>
+                  </div>
                 </div>
-                <div className="pt-4 border-t border-neutral-100 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-neutral-600">Last Screening</span>
-                    <span className="text-sm font-medium text-neutral-900">{healthMetrics.lastScreening}</span>
+
+                <div className="pt-8 mt-auto">
+                  <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${healthMetrics.wellnessScore}%` }}
+                      transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
+                      className={cn("h-full rounded-full bg-gradient-to-r",
+                        healthMetrics.wellnessColor === 'emerald' ? "from-emerald-500 to-teal-400" :
+                          healthMetrics.wellnessColor === 'amber' ? "from-amber-500 to-yellow-400" :
+                            "from-red-500 to-pink-500"
+                      )}
+                    />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-neutral-600">Reports</span>
-                    <span className="text-sm font-medium text-neutral-900">{healthMetrics.reportsGenerated}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-neutral-600">Appointments</span>
-                    <span className="text-sm font-medium text-neutral-900">{healthMetrics.upcomingAppointments}</span>
-                  </div>
+                  <p className="text-xs text-white/40 mt-2 text-right">
+                    {healthMetrics.wellnessScore > 0 ? "Analyzing your latest health data" : "No sufficient data yet"}
+                  </p>
+
                 </div>
               </div>
-            </div>
+            </motion.div>
+
+            {/* Quick Stats Grid */}
+            <motion.div variants={itemVariants} className="grid grid-rows-3 gap-4">
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow group">
+                <div>
+                  <p className="text-sm text-slate-400 font-semibold uppercase tracking-wider mb-1">Risk Assessment</p>
+                  <p className={cn("text-2xl font-bold",
+                    healthMetrics.riskLevel === 'Low' ? 'text-emerald-600' :
+                      healthMetrics.riskLevel === 'Medium' ? 'text-amber-500' :
+                        healthMetrics.riskLevel === 'Unknown' ? 'text-slate-900' : 'text-red-600'
+                  )}>{healthMetrics.riskLevel}</p>
+                </div>
+                <div className="p-3 bg-slate-50 rounded-xl group-hover:bg-slate-100 transition-colors">
+                  <Shield className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow group">
+                <div>
+                  <p className="text-sm text-slate-400 font-semibold uppercase tracking-wider mb-1">Last Screening</p>
+                  <p className="text-2xl font-bold text-slate-800">{healthMetrics.lastScreening}</p>
+                </div>
+                <div className="p-3 bg-slate-50 rounded-xl group-hover:bg-slate-100 transition-colors">
+                  <Clock className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow group">
+                <div>
+                  <p className="text-sm text-slate-400 font-semibold uppercase tracking-wider mb-1">Total Reports</p>
+                  <p className="text-2xl font-bold text-slate-800">{healthMetrics.totalReports}</p>
+                </div>
+                <div className="p-3 bg-slate-50 rounded-xl group-hover:bg-slate-100 transition-colors">
+                  <FileText className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="px-4 sm:px-6 mb-6">
+      <div className="px-4 sm:px-6 lg:px-8 mb-10">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-4">
-            <h2 className="text-xl font-bold text-neutral-900">Quick Actions</h2>
-            <p className="text-sm text-neutral-500 mt-1">Access your health tools</p>
+          <div className="flex items-center gap-2 mb-6">
+            <h2 className="text-xl font-bold text-slate-900">Quick Actions</h2>
+            <div className="h-px flex-1 bg-slate-200"></div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-
-            {/* Blood Analyzer */}
-            <div className="group relative bg-white p-6 rounded-2xl border border-neutral-200 hover:shadow-lg transition-all duration-300 flex flex-col">
-              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform mb-4">
-                <Activity className="w-6 h-6 text-red-600" />
-              </div>
-              <div className="flex-1 mb-4">
-                <h3 className="text-lg font-bold text-neutral-900 mb-2">Blood Analyzer</h3>
-                <p className="text-neutral-600 text-sm leading-relaxed">Upload blood reports for AI-powered cancer risk assessment</p>
-              </div>
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => router.push('/dashboard/blood-analyzer')}
-                className="w-full mt-auto"
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { title: "Blood Analysis", icon: Activity, color: "red", url: "/dashboard/blood-analyzer", desc: "Upload reports" },
+              { title: "Screening Tools", icon: Scan, color: "blue", url: "/dashboard/screening-tools", desc: "Early detection" },
+              { title: "AI Assistant", icon: MessageSquare, color: "emerald", url: "/dashboard/chatbot", desc: "Get answers" },
+              { title: "Sample Report", icon: FileText, color: "violet", url: "/dashboard/report/mock", desc: "View MRI Demo" }
+            ].map((action, i) => (
+              <motion.button
+                key={action.title}
+                variants={itemVariants}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => router.push(action.url)}
+                className="group relative flex flex-col items-center text-center p-6 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300"
               >
-                <span>Analyze Now</span>
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
+                <div className={cn(
+                  "w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110",
+                  `bg-${action.color}-50 text-${action.color}-500`
+                )}>
+                  <action.icon className="w-7 h-7" />
+                </div>
+                <h3 className="font-bold text-slate-900 mb-1">{action.title}</h3>
+                <p className="text-xs text-slate-500">{action.desc}</p>
 
-            {/* Screening Tools */}
-            <div className="group relative bg-white p-6 rounded-2xl border border-neutral-200 hover:shadow-lg transition-all duration-300 flex flex-col">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform mb-4">
-                <Scan className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="flex-1 mb-4">
-                <h3 className="text-lg font-bold text-neutral-900 mb-2">Screening Tools</h3>
-                <p className="text-neutral-600 text-sm leading-relaxed">Access comprehensive cancer screening tools and early detection</p>
-              </div>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => router.push('/dashboard/screening-tools')}
-                className="w-full mt-auto"
-              >
-                <span>Start Screening</span>
-                <Target className="w-4 h-4" />
-              </Button>
-            </div>
-
-            {/* AI Chatbot */}
-            <div className="group relative bg-white p-6 rounded-2xl border border-neutral-200 hover:shadow-lg transition-all duration-300 flex flex-col">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform mb-4">
-                <MessageSquare className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="flex-1 mb-4">
-                <h3 className="text-lg font-bold text-neutral-900 mb-2">Health Assistant</h3>
-                <p className="text-neutral-600 text-sm leading-relaxed">Chat with AI health assistant for personalized guidance</p>
-              </div>
-              <Button
-                variant="success"
-                size="sm"
-                onClick={() => router.push('/dashboard/chatbot')}
-                className="w-full mt-auto"
-              >
-                <span>Chat Now</span>
-                <Zap className="w-4 h-4" />
-              </Button>
-            </div>
-
-            {/* Reports Hub */}
-            <div className="group relative bg-white p-6 rounded-2xl border border-neutral-200 hover:shadow-lg transition-all duration-300 flex flex-col">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform mb-4">
-                <FileText className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="flex-1 mb-4">
-                <h3 className="text-lg font-bold text-neutral-900 mb-2">Reports Hub</h3>
-                <p className="text-neutral-600 text-sm leading-relaxed">View, download, and manage all your health reports</p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push('/dashboard/reports')}
-                className="w-full mt-auto"
-              >
-                <span>View Reports</span>
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ArrowRight className="w-4 h-4 text-slate-300" />
+                </div>
+              </motion.button>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Recent Reports Table */}
-      <div className="px-4 sm:px-6 pb-6">
+      {/* Recent Reports */}
+      <div className="px-4 sm:px-6 lg:px-8 pb-12">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-neutral-900">Recent Reports</h2>
-              <p className="text-sm text-neutral-500 mt-1">Your latest health assessments</p>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold text-slate-900">Recent Reports</h2>
+              <span className="px-2 py-0.5 rounded-full bg-slate-100 text-xs font-semibold text-slate-600">{recentReports.length}</span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push('/dashboard/report-history')}
-            >
-              View All
-              <ArrowRight className="w-4 h-4" />
+            <Button variant="ghost" className="text-slate-500 hover:text-slate-900" onClick={() => router.push('/dashboard/report-history')}>
+              View All <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
 
-          <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
-
+          <motion.div variants={itemVariants} className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
             {loadingReports ? (
-              <div className="p-8 text-center">
-                <p className="text-neutral-500">Loading reports...</p>
-              </div>
-            ) : recentReports.length === 0 ? (
-              <div className="p-12 text-center">
-                <FileText className="w-16 h-16 mx-auto text-neutral-300 mb-4" />
-                <h3 className="text-lg font-semibold text-neutral-900 mb-2">No Reports Yet</h3>
-                <p className="text-neutral-500 mb-6">Start your health journey by taking your first assessment</p>
-                <Button
-                  variant="primary"
-                  onClick={() => router.push('/dashboard/blood-analyzer')}
-                >
-                  <span>Upload Blood Report</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </div>
-            ) : (
-              <>
-                {/* Mobile Card View */}
-                <div className="block md:hidden">
-                  <div className="divide-y divide-gray-100">
-                    {recentReports.map((report) => (
-                  <div key={report.id} className="p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                          report.color === 'green' ? 'bg-green-100' :
-                          report.color === 'yellow' ? 'bg-yellow-100' : 'bg-red-100'
-                        }`}>
-                          <report.icon className={`w-4 h-4 ${
-                            report.color === 'green' ? 'text-green-600' :
-                            report.color === 'yellow' ? 'text-yellow-600' : 'text-red-600'
-                          }`} />
-                        </div>
-                        <div>
-                          <div className="font-mono font-medium text-sm text-gray-900">{report.id}</div>
-                          <div className="text-xs text-gray-500">{new Date(report.date).toLocaleDateString()}</div>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm">
-                        View
-                      </Button>
-                    </div>
-
-                    <div>
-                      <div className="font-medium text-sm text-gray-900 mb-1">{report.type}</div>
-                      <div className="flex items-center gap-2">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-                          report.status === 'Normal' || report.status === 'Completed' ? 'bg-green-100 text-green-700' :
-                          report.status === 'Review Required' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
-                          {report.status === 'Normal' || report.status === 'Completed' ?
-                            <CheckCircle className="w-3 h-3" /> :
-                            <AlertTriangle className="w-3 h-3" />
-                          }
-                          {report.status}
-                        </span>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
-                          report.riskLevel === 'Low' ? 'bg-green-100 text-green-700' :
-                          report.riskLevel === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
-                          {report.riskLevel} Risk
-                        </span>
-                      </div>
+              <div className="p-8 space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <Skeleton className="h-12 w-12 rounded-xl" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-4 w-1/4" />
+                      <Skeleton className="h-3 w-1/3" />
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-100">
-                  <tr>
-                    <th className="text-left p-4 lg:p-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Report ID</th>
-                    <th className="text-left p-4 lg:p-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Type</th>
-                    <th className="text-left p-4 lg:p-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Date</th>
-                    <th className="text-left p-4 lg:p-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Status</th>
-                    <th className="text-left p-4 lg:p-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Risk Level</th>
-                    <th className="text-left p-4 lg:p-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {recentReports.map((report) => (
-                    <tr key={report.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="p-4 lg:p-6">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center ${
-                            report.color === 'green' ? 'bg-green-100' :
-                            report.color === 'yellow' ? 'bg-yellow-100' : 'bg-red-100'
-                          }`}>
-                            <report.icon className={`w-4 h-4 lg:w-5 lg:h-5 ${
-                              report.color === 'green' ? 'text-green-600' :
-                              report.color === 'yellow' ? 'text-yellow-600' : 'text-red-600'
-                            }`} />
-                          </div>
-                          <span className="font-mono font-medium text-gray-900">{report.id}</span>
-                        </div>
-                      </td>
-                      <td className="p-4 lg:p-6">
-                        <span className="font-medium text-gray-900">{report.type}</span>
-                      </td>
-                      <td className="p-4 lg:p-6">
-                        <span className="text-gray-600">{new Date(report.date).toLocaleDateString()}</span>
-                      </td>
-                      <td className="p-4 lg:p-6">
-                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
-                          report.status === 'Normal' || report.status === 'Completed' ? 'bg-green-100 text-green-700' :
-                          report.status === 'Review Required' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
-                          {report.status === 'Normal' || report.status === 'Completed' ?
-                            <CheckCircle className="w-3 h-3" /> :
-                            <AlertTriangle className="w-3 h-3" />
-                          }
-                          {report.status}
-                        </span>
-                      </td>
-                      <td className="p-4 lg:p-6">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                          report.riskLevel === 'Low' ? 'bg-green-100 text-green-700' :
-                          report.riskLevel === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
-                          {report.riskLevel}
-                        </span>
-                      </td>
-                      <td className="p-4 lg:p-6">
-                        <Button variant="primary" size="sm">
-                          View Details
-                        </Button>
-                      </td>
+            ) : recentReports.length === 0 ? (
+              <div className="p-16 text-center">
+                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FileText className="w-10 h-10 text-slate-300" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">No reports yet</h3>
+                <p className="text-slate-500 mb-6 max-w-sm mx-auto">Your health reports will appear here once you complete your first screening or analysis.</p>
+                <Button onClick={() => router.push('/dashboard/blood-analyzer')}>
+                  Start First Analysis
+                </Button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50/50">
+                    <tr>
+                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Report</th>
+                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Date</th>
+                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell">Risk Level</th>
+                      <th className="text-right py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-          )}
-          </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    <AnimatePresence>
+                      {recentReports.map((report, i) => (
+                        <motion.tr
+                          key={report.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          whileHover={{ backgroundColor: "rgba(248,250,252, 0.8)" }}
+                          className="group cursor-pointer"
+                        >
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-3">
+                              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center",
+                                report.color === 'green' ? 'bg-emerald-50 text-emerald-600' :
+                                  report.color === 'red' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
+                              )}>
+                                <report.icon className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-900 text-sm">{report.type}</p>
+                                <p className="text-xs text-slate-500 font-mono">#{report.id}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6 hidden sm:table-cell">
+                            <p className="text-sm text-slate-600">{report.date}</p>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border",
+                              report.status.includes('Normal') || report.status.includes('Completed')
+                                ? "bg-emerald-50/50 border-emerald-100 text-emerald-700"
+                                : "bg-amber-50/50 border-amber-100 text-amber-700"
+                            )}>
+                              {report.status.includes('Normal') || report.status.includes('Completed') ? (
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                              ) : (
+                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></div>
+                              )}
+                              {report.status}
+                            </div>
+                          </td>
+                          <td className="py-4 px-6 hidden md:table-cell">
+                            <span className={cn("text-sm font-medium",
+                              report.riskLevel === 'Low' ? "text-emerald-600" :
+                                report.riskLevel === 'Medium' ? "text-amber-600" : "text-red-600"
+                            )}>
+                              {report.riskLevel}
+                            </span>
+                          </td>
+                          <td className="py-4 px-6 text-right">
+                            <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                              Details <ArrowRight className="w-4 h-4 ml-1" />
+                            </Button>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </AnimatePresence>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </motion.div>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
+
+

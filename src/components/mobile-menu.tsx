@@ -1,34 +1,22 @@
 "use client"
 
 import { useEffect } from 'react'
-import { X, Home, MessageCircle, Scan, ClipboardList, UserCircle, ActivitySquare, History, Shield, Clock } from 'lucide-react'
+import { X, Home, MessageCircle, Scan, ActivitySquare, History, UserCircle, ChevronLeft } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'motion/react'
+import Link from 'next/link'
 
+// Medical navigation items - Synced with ExpandableSidebar
 const navigationItems = [
   {
     title: "Main Menu",
     items: [
       { icon: <Home className="h-5 w-5" />, label: "Dashboard", url: "/dashboard" },
       { icon: <MessageCircle className="h-5 w-5" />, label: "Chatbot", url: "/dashboard/chatbot" },
-      { icon: <Scan className="h-5 w-5" />, label: "Screening Tools", url: "/dashboard/screening-tools" },
-      { icon: <ClipboardList className="h-5 w-5" />, label: "Reports", url: "/dashboard/reports" },
-      { icon: <UserCircle className="h-5 w-5" />, label: "Profile", url: "/dashboard/profile" },
-    ]
-  },
-  {
-    title: "Medical Tools",
-    items: [
+      { icon: <Scan className="h-5 w-5" />, label: "MRI Analyzer", url: "/dashboard/mri-analysis" },
       { icon: <ActivitySquare className="h-5 w-5" />, label: "Blood Analyzer", url: "/dashboard/blood-analyzer" },
       { icon: <History className="h-5 w-5" />, label: "Report History", url: "/dashboard/report-history" },
-      { icon: <Shield className="h-5 w-5" />, label: "Screening Recs", url: "/dashboard/screening-recs" },
-    ]
-  },
-  {
-    title: "Help",
-    items: [
-      { icon: <Clock className="h-5 w-5" />, label: "Help Center", url: "/dashboard/help" },
     ]
   }
 ]
@@ -85,7 +73,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/25"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
           />
 
@@ -99,14 +87,14 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               duration: 0.3,
               ease: "easeInOut"
             }}
-            className="relative flex h-full w-full max-w-xs flex-col bg-white shadow-xl"
+            className="relative flex h-full w-full max-w-xs flex-col bg-[#0E2A2A] shadow-2xl border-r border-white/10"
           >
             {/* Header */}
-            <div className="flex h-16 shrink-0 items-center justify-between px-6 border-b border-gray-100">
-              <div className="font-mono text-xl font-bold text-gray-900">Jeev Veda</div>
+            <div className="flex h-16 shrink-0 items-center justify-between px-6 border-b border-white/10">
+              <div className="font-mono text-xl font-bold text-white">Jeev Veda</div>
               <button
                 type="button"
-                className="-m-2 p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="-m-2 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                 onClick={onClose}
               >
                 <span className="sr-only">Close sidebar</span>
@@ -115,31 +103,31 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto px-6 py-6">
-              <div className="space-y-8">
+            <nav className="flex-1 overflow-y-auto px-4 py-6">
+              <div className="space-y-6">
                 {navigationItems.map((section) => (
                   <div key={section.title}>
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">
+                    <h3 className="px-2 text-xs font-semibold text-white/40 uppercase tracking-wide mb-3">
                       {section.title}
                     </h3>
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       {section.items.map((item) => (
                         <button
                           key={item.label}
                           onClick={() => handleNavigation(item.url)}
                           className={cn(
-                            "w-full flex items-center gap-x-3 rounded-lg p-3 text-sm font-medium transition-all duration-200",
+                            "w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200",
                             isActive(item.url)
-                              ? "bg-green-50 text-green-700 border-2 border-green-200 shadow-sm"
-                              : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 border-2 border-transparent"
+                              ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10"
+                              : "text-neutral-400 hover:bg-white/5 hover:text-white group"
                           )}
                         >
-                          <span className={cn(
-                            "flex-shrink-0",
-                            isActive(item.url) ? "text-green-600" : "text-gray-400 group-hover:text-gray-600"
+                          <div className={cn(
+                            "flex-shrink-0 transition-colors",
+                            isActive(item.url) ? "text-emerald-400" : "group-hover:text-emerald-400"
                           )}>
                             {item.icon}
-                          </span>
+                          </div>
                           {item.label}
                         </button>
                       ))}
@@ -149,10 +137,28 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               </div>
             </nav>
 
-            {/* Footer */}
-            <div className="border-t border-gray-100 p-6">
-              <div className="text-xs text-gray-500 text-center">
-                Jeev Veda Health Platform
+            {/* Profile Section (Bottom) */}
+            <div className="p-4 border-t border-white/10 bg-[#0E2A2A]">
+              <button
+                onClick={() => handleNavigation('/dashboard/profile')}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200",
+                  isActive('/dashboard/profile')
+                    ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10"
+                    : "text-neutral-400 hover:bg-white/5 hover:text-white group"
+                )}
+              >
+                <div className={cn(
+                  "flex-shrink-0 transition-colors",
+                  isActive('/dashboard/profile') ? "text-emerald-400" : "group-hover:text-emerald-400"
+                )}>
+                  <UserCircle className="h-5 w-5" />
+                </div>
+                Profile
+              </button>
+
+              <div className="mt-4 text-xs text-white/20 text-center font-mono">
+                v1.0.0
               </div>
             </div>
           </motion.div>

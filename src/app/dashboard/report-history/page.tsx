@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { History, FileText, Download, Eye, Activity, Scan, Shield } from "lucide-react"
-import { Button } from "@/components/ui/professional-button"
+import { History, FileText, Download, Eye, Activity, Scan, Shield, Loader2, Search, Filter, ArrowUpRight, ArrowRight, ChevronLeft, ChevronRight, SlidersHorizontal, ArrowUpDown, MoreVertical, Trash2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { cn } from "@/lib/utils"
 
 interface Report {
   _id: string;
@@ -27,6 +30,44 @@ export default function ReportHistoryPage() {
     hasNext: false,
     hasPrev: false
   })
+
+  const [reportToDelete, setReportToDelete] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  // Open delete confirmation
+  const initiateDelete = (reportId: string) => {
+    setReportToDelete(reportId)
+  }
+
+  // Actual delete handler
+  const confirmDelete = async () => {
+    if (!reportToDelete) return
+
+    setIsDeleting(true)
+    try {
+      const res = await fetch(`/api/reports/${reportToDelete}`, {
+        method: "DELETE",
+      })
+
+      const data = await res.json()
+
+      if (res.ok && data.success) {
+        // Remove from local state
+        setReports(current => current.filter(r => r._id !== reportToDelete))
+        setPagination(prev => ({ ...prev, totalReports: prev.totalReports - 1 }))
+      } else {
+        alert(data.error || "Failed to delete report") // Keep alert for error only
+      }
+      setIsDeleting(false)
+    } catch (error) {
+      console.error("Error deleting report:", error)
+      alert("An unexpected error occurred")
+      setIsDeleting(false)
+    } finally {
+      setIsDeleting(false)
+      setReportToDelete(null)
+    }
+  }
 
   // Fetch reports from API
   useEffect(() => {
@@ -70,28 +111,31 @@ export default function ReportHistoryPage() {
     }
   }
 
-  // Get type color
+  // Get type color - Professional/Static style
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'BLOOD_ANALYSIS': return 'text-red-600 bg-red-100'
-      case 'MRI_SCAN': return 'text-blue-600 bg-blue-100'
-      case 'RISK_ASSESSMENT': return 'text-green-600 bg-green-100'
-      default: return 'text-gray-600 bg-gray-100'
+      case 'BLOOD_ANALYSIS': return 'text-rose-600 bg-rose-50'
+      case 'MRI_SCAN': return 'text-blue-600 bg-blue-50'
+      case 'RISK_ASSESSMENT': return 'text-emerald-600 bg-emerald-50'
+      default: return 'text-slate-600 bg-slate-50'
     }
   }
 
-  // Format file size
-  const formatFileSize = (bytes?: number) => {
-    if (!bytes) return 'N/A'
-    const mb = bytes / (1024 * 1024)
-    return `${mb.toFixed(2)} MB`
+  // New Status Dot Color
+  const getStatusColor = (type: string) => {
+    switch (type) {
+      case 'BLOOD_ANALYSIS': return 'bg-rose-500'
+      case 'MRI_SCAN': return 'bg-blue-500'
+      case 'RISK_ASSESSMENT': return 'bg-emerald-500'
+      default: return 'bg-slate-500'
+    }
   }
 
   // Filter reports by search query
   const filteredReports = reports.filter(report => {
     const matchesSearch = report._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         report.reportType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (report.fileName && report.fileName.toLowerCase().includes(searchQuery.toLowerCase()))
+      report.reportType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (report.fileName && report.fileName.toLowerCase().includes(searchQuery.toLowerCase()))
     return matchesSearch
   })
 
@@ -102,235 +146,227 @@ export default function ReportHistoryPage() {
   const riskAssessments = reports.filter(r => r.reportType === 'RISK_ASSESSMENT').length
 
   return (
-    <div className="min-h-screen bg-neutral-50 p-4 sm:p-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-          <History className="w-6 h-6 text-purple-600" />
-        </div>
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900">Report History</h1>
-          <p className="text-neutral-600">View and manage all your medical reports</p>
-        </div>
-      </div>
+    <div className="h-screen flex flex-col bg-[#F5F7FA] font-sans text-slate-900 overflow-hidden">
 
-      {/* Filters and Search */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Search reports by ID, type, or filename..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
-            />
+      {/* Fixed Top Section: Header & Stats */}
+      <div className="flex-none p-6 pb-0 space-y-6">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Reports Overview</h1>
+            <p className="text-slate-500 text-sm mt-1">Manage and track your medical history</p>
           </div>
-          <select
-            value={selectedFilter}
-            onChange={(e) => setSelectedFilter(e.target.value)}
-            className="px-4 py-3 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
-          >
-            <option value="ALL">All Report Types</option>
-            <option value="BLOOD_ANALYSIS">Blood Analysis</option>
-            <option value="MRI_SCAN">MRI Scans</option>
-            <option value="RISK_ASSESSMENT">Risk Assessments</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200 text-center">
-          <div className="w-12 h-12 bg-neutral-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-            <FileText className="w-6 h-6 text-neutral-900" />
-          </div>
-          <h3 className="text-2xl font-bold text-neutral-900">{totalReports}</h3>
-          <p className="text-sm text-neutral-600">Total Reports</p>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200 text-center">
-          <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-            <Activity className="w-6 h-6 text-red-600" />
-          </div>
-          <h3 className="text-2xl font-bold text-neutral-900">{bloodTests}</h3>
-          <p className="text-sm text-neutral-600">Blood Tests</p>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200 text-center">
-          <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-            <Scan className="w-6 h-6 text-blue-600" />
-          </div>
-          <h3 className="text-2xl font-bold text-neutral-900">{mriScans}</h3>
-          <p className="text-sm text-neutral-600">MRI Scans</p>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200 text-center">
-          <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-            <Shield className="w-6 h-6 text-green-600" />
-          </div>
-          <h3 className="text-2xl font-bold text-neutral-900">{riskAssessments}</h3>
-          <p className="text-sm text-neutral-600">Risk Assessments</p>
-        </div>
-      </div>
-
-      {/* Reports Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-neutral-200">
-          <h3 className="text-lg font-semibold text-neutral-900">Medical Reports</h3>
-          <p className="text-sm text-neutral-600">All your medical reports and assessments</p>
-        </div>
-
-        {loading ? (
-          <div className="p-12 text-center">
-            <p className="text-neutral-500">Loading reports...</p>
-          </div>
-        ) : filteredReports.length === 0 ? (
-          <div className="p-12 text-center">
-            <FileText className="w-16 h-16 mx-auto text-neutral-300 mb-4" />
-            <h3 className="text-lg font-semibold text-neutral-900 mb-2">No Reports Found</h3>
-            <p className="text-neutral-500 mb-6">Start your health journey by taking your first assessment</p>
+          <div>
             <Button
-              variant="primary"
               onClick={() => router.push('/dashboard/blood-analyzer')}
+              className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-6 shadow-md shadow-blue-200"
             >
-              Upload Blood Report
+              + Add New Analysis
             </Button>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-neutral-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Report ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">File Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Size</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-neutral-100">
-                {filteredReports.map((report) => {
-                  const Icon = getIcon(report.reportType)
-                  return (
-                    <tr key={report._id} className="hover:bg-neutral-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getTypeColor(report.reportType).replace('text-', 'bg-').replace('-600', '-100')}`}>
-                            <Icon className={`w-5 h-5 ${getTypeColor(report.reportType).split(' ')[0]}`} />
-                          </div>
-                          <div className="text-sm font-mono font-medium text-neutral-900">
-                            {report._id.slice(-8).toUpperCase()}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getTypeColor(report.reportType)}`}>
-                          {getTypeName(report.reportType)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-neutral-900">
-                          {new Date(report.createdAt).toLocaleDateString()}
-                        </div>
-                        <div className="text-xs text-neutral-500">
-                          {new Date(report.createdAt).toLocaleTimeString()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-neutral-900 truncate max-w-xs">
-                          {report.fileName || 'N/A'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-neutral-600">
-                          {formatFileSize(report.fileSize)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => router.push(`/dashboard/reports/${report._id}`)}
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              // Download report as JSON
-                              const dataStr = JSON.stringify(report.reportData, null, 2)
-                              const dataBlob = new Blob([dataStr], { type: 'application/json' })
-                              const url = URL.createObjectURL(dataBlob)
-                              const link = document.createElement('a')
-                              link.href = url
-                              link.download = `report-${report._id}.json`
-                              link.click()
-                              URL.revokeObjectURL(url)
-                            }}
-                            className="text-green-600 hover:text-green-800"
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <div className="flex justify-center gap-2">
-          <Button
-            variant="outline"
-            disabled={!pagination.hasPrev}
-            onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
-          >
-            Previous
-          </Button>
-          <span className="px-4 py-2 text-sm text-neutral-600">
-            Page {pagination.currentPage} of {pagination.totalPages}
-          </span>
-          <Button
-            variant="outline"
-            disabled={!pagination.hasNext}
-            onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
-          >
-            Next
-          </Button>
         </div>
-      )}
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-4">
-        <Button
-          variant="primary"
-          onClick={() => router.push('/dashboard/blood-analyzer')}
-        >
-          New Blood Analysis
-        </Button>
-        <Button
-          variant="primary"
-          onClick={() => router.push('/dashboard/screening-tools/mri-analysis')}
-        >
-          New MRI Scan
-        </Button>
-        <Button
-          variant="success"
-          onClick={() => router.push('/dashboard/chatbot')}
-        >
-          Risk Assessment
-        </Button>
+        {/* Stats Cards - Clean White Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          {[
+            { label: "Total Reports", value: totalReports, icon: FileText, color: "text-blue-600", bg: "bg-blue-50" },
+            { label: "Blood Tests", value: bloodTests, icon: Activity, color: "text-rose-500", bg: "bg-rose-50" },
+            { label: "MRI Scans", value: mriScans, icon: Scan, color: "text-indigo-500", bg: "bg-indigo-50" },
+            { label: "Risk Assessments", value: riskAssessments, icon: Shield, color: "text-emerald-500", bg: "bg-emerald-50" }
+          ].map((stat, idx) => (
+            <div key={idx} className="bg-white p-6 rounded-lg shadow-sm border border-slate-100 flex flex-col justify-between h-28 relative overflow-hidden group">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-slate-500 text-sm font-medium mb-1">{stat.label}</p>
+                  <h3 className="text-3xl font-bold text-slate-800">{stat.value}</h3>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* Scrollable Bottom Section: Filter & List */}
+      <div className="flex-1 overflow-y-auto p-6 min-h-0">
+
+        {/* Reports List Section */}
+        <div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <h2 className="text-xl font-bold text-slate-800">Reports List</h2>
+
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+              {/* Search */}
+              <div className="relative group w-full sm:w-auto">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full sm:w-64 pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all"
+                />
+              </div>
+
+              {/* Filter Buttons */}
+              <div className="flex items-center bg-white rounded-full border border-slate-200 p-1 shadow-sm w-full sm:w-auto justify-center sm:justify-start">
+                <button className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 rounded-full flex items-center justify-center gap-1">
+                  <Filter className="w-3 h-3" /> Filter
+                </button>
+                <div className="w-px h-4 bg-slate-200 mx-1"></div>
+                <button className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 rounded-full flex items-center justify-center gap-1">
+                  <ArrowUpDown className="w-3 h-3" /> Sort
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+            {/* Table Header */}
+            <div className="rounded-t-xl sticky top-0 grid grid-cols-12 gap-4 px-6 py-4 bg-slate-50 border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider backdrop-blur-sm">
+              <div className="col-span-3">Report ID</div>
+              <div className="col-span-4">Type</div>
+              <div className="col-span-3">Date</div>
+              <div className="col-span-2 text-right">Action</div>
+            </div>
+
+            {/* List Content */}
+            <div className="divide-y divide-slate-100">
+              {loading ? (
+                <div className="p-12 text-center">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500 mb-3" />
+                  <p className="text-slate-500 text-sm">Loading records...</p>
+                </div>
+              ) : filteredReports.length === 0 ? (
+                <div className="p-16 text-center">
+                  <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-5 h-5 text-slate-400" />
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-800">No reports found</h3>
+                  <p className="text-slate-400 text-xs mt-1">Try adjusting your search or filters.</p>
+                </div>
+              ) : (
+                filteredReports.map((report) => (
+                  <div
+                    key={report._id}
+                    className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-slate-50/50 transition-colors group"
+                  >
+                    {/* ID */}
+                    <div className="col-span-3">
+                      <span className="font-mono text-sm font-medium text-slate-700">
+                        #{report._id.slice(-6).toUpperCase()}
+                      </span>
+                    </div>
+
+                    {/* Type Badge */}
+                    <div className="col-span-4">
+                      <span className={cn("inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border", getTypeColor(report.reportType).replace('text-', 'border-').replace('bg-', 'bg-opacity-10 '))} >
+                        {getTypeName(report.reportType)}
+                      </span>
+                    </div>
+
+                    {/* Date */}
+                    <div className="col-span-3">
+                      <p className="text-sm text-slate-600">{new Date(report.createdAt).toLocaleDateString()}</p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="col-span-2 flex justify-end">
+                      <DropdownMenu key={`menu-${report._id}-${reportToDelete}`} modal={false}>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreVertical className="h-4 w-4 text-slate-800" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => router.push(`/dashboard/report/${report._id}`)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            <span>View Report</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={(e) => {
+                              e.preventDefault()
+                              initiateDelete(report._id)
+                            }}
+                            className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            <span>Delete</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Pagination Footer */}
+          {pagination.totalPages > 1 && (
+            <div className="flex justify-end items-center gap-4 mt-8">
+              <span className="text-sm text-slate-500">
+                Page <span className="font-semibold text-slate-800">{pagination.currentPage}</span> of {pagination.totalPages}
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 rounded-full"
+                  disabled={!pagination.hasPrev}
+                  onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 rounded-full bg-blue-600 text-white hover:bg-blue-700 border-transparent"
+                  disabled={!pagination.hasNext}
+                  onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <AlertDialog open={!!reportToDelete} onOpenChange={(open) => {
+        if (!open) {
+          setReportToDelete(null)
+          setIsDeleting(false)
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the report from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault() // Validate first
+                confirmDelete()
+              }}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

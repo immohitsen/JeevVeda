@@ -33,6 +33,6 @@ const reportSchema = new mongoose.Schema({
 // Index for fast queries
 reportSchema.index({ userId: 1, createdAt: -1 });
 
-const Report = mongoose.models.reports || mongoose.model("reports", reportSchema);
+const Report = mongoose.models.Report || mongoose.model("Report", reportSchema);
 
 export default Report;

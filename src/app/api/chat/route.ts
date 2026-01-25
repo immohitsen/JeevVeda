@@ -1,218 +1,189 @@
 import { GoogleGenAI } from "@google/genai";
-import { NextRequest, NextResponse } from 'next/server';
-import { ZodError } from 'zod';
-import { 
-  ChatRequestSchema,
-  ExtractedDataSchema,
-  getMissingFields,
-  validatePartialHealthData
-} from '@/lib/types';
+import { NextRequest, NextResponse } from "next/server";
+import { ChatRequestSchema, ExtractedDataSchema, validatePartialHealthData, getMissingFields } from "@/lib/types";
+import { connect } from '@/dbConfig/dbConfig';
+import Report from '@/models/reportModel';
+import jwt from 'jsonwebtoken';
 
-// Use a dummy API key ONLY for local testing if the environment variable is not set
-const apiKey = process.env.GEMINI_API_KEY || 'dummy_api_key_for_testing';
-console.log(`Using API key: ${apiKey === 'dummy_api_key_for_testing' ? 'DUMMY KEY (fallback mode)' : 'Valid Key'}`);
-const genAI = new GoogleGenAI({ apiKey });
+const genAI = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY!,
+});
+
+// Initialize DB connection
+connect();
 
 // Simplified required fields for a better user experience
 const requiredFields = [
-  'age', 'gender', 'height_weight', 'smoking_status', 'alcohol_consumption', 
-  'diet_habits', 'physical_activity', 'family_cancer_history', 'symptom_bowel_bladder', 
-  'symptom_sore', 'symptom_bleeding', 'symptom_lump', 'symptom_swallowing', 
-  'symptom_mole_change', 'symptom_cough'
+  'age',
+  'gender',
+  'height_weight',
+  'smoking_status',
+  'alcohol_consumption',
+  'diet_habits',
+  'physical_activity',
+  'family_cancer_history',
+  'symptom_digestive_swallowing',
+  'symptom_bleeding_cough',
+  'symptom_skin_lumps'
 ];
 
-// Friendly question templates
-const questionTemplates: Record<string, string> = {
-  age: "Could you share your age, please?",
-  gender: "And how do you identify your gender?",
-  height_weight: "Thanks! What’s your height and weight?",
-  smoking_status: "Do you currently smoke, or have you smoked in the past?",
-  alcohol_consumption: "What about alcohol? Do you drink, and how often?",
-  diet_habits: "Could you tell me a little about your diet habits?",
-  physical_activity: "How active are you physically – do you exercise regularly?",
-  family_cancer_history: "Has anyone in your family had cancer?",
-  symptom_bowel_bladder: "Have you noticed any recent changes in your bowel or bladder habits?",
-  symptom_sore: "Do you have any sores that are not healing?",
-  symptom_bleeding: "Have you experienced any unusual bleeding?",
-  symptom_lump: "Have you felt any lumps in your body?",
-  symptom_swallowing: "Do you face difficulty swallowing?",
-  symptom_mole_change: "Have you noticed any change in a mole or skin spot?",
-  symptom_cough: "Do you have a persistent cough or hoarseness?",
+const QUESTION_MAP: Record<string, string> = {
+  age: "To help me get to know you, could you please start by telling me your age?",
+  gender: "Thank you. What describes your gender?",
+  height_weight: "Could you share your height and weight? (e.g., 5'6\" 70kg)",
+  smoking_status: "Do you smoke or use tobacco products? (e.g., cigarettes, gutka, paan)",
+  alcohol_consumption: "How often do you consume alcohol?",
+  diet_habits: "How would you describe your typical diet? (e.g., Vegetarian, Non-veg, Home-cooked, Spicy)",
+  physical_activity: "How often do you exercise or engage in physical activity?",
+  family_cancer_history: "Does your family have any history of cancer? If yes, please specify.",
+  symptom_digestive_swallowing: "Have you noticed any persistent changes in bowel/bladder habits or difficulty swallowing?",
+  symptom_bleeding_cough: "Do you have any unusual bleeding, discharge, or a persistent cough?",
+  symptom_skin_lumps: "Have you noticed any new lumps, sores that won't heal, or changes in moles/warts?",
 };
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const validatedRequest = ChatRequestSchema.parse(body);
-    
     const { history, userResponses } = validatedRequest;
-    const validatedResponses = validatePartialHealthData(userResponses);
-    
-    if (!validatedResponses) {
-      return NextResponse.json({ error: 'Invalid user response data format' }, { status: 400 });
-    }
 
-    const collectedFields = Object.keys(validatedResponses);
+    // Use passed userResponses, or empty object if first time
+    let currentData = { ...userResponses };
+    const lastUserMessage = history.length > 0 && history[history.length - 1].role === 'user'
+      ? history[history.length - 1].content
+      : null;
 
-    // Figure out missing fields so far
-    const missingFields = getMissingFields(requiredFields, collectedFields);
+    // 1. Check what we are missing BEFORE processing the new message
+    // (This tells us what question the user is answering)
+    let missingFields = getMissingFields(requiredFields, Object.keys(currentData));
 
-    if (missingFields.length === 0 && collectedFields.length > 0) {
-      return NextResponse.json({
-        reply: "Thank you for providing all the information 🙏. I now have everything I need to prepare your assessment.",
-        extractedData: {},
-        isComplete: true,
-      });
-    }
-
-    const nextQuestionKey = missingFields[0];
-
-    // Fallback mock mode
-    if (apiKey === 'dummy_api_key_for_testing') {
-      const lastUserMessage = history[history.length - 1]?.content || "";
-      return createMockAIResponse(nextQuestionKey, lastUserMessage);
-    }
-
-    const systemPrompt = `
-      You are Dr. Priya, a friendly and empathetic health companion for users in India. 
-      Your role is to collect health information in a natural conversation.
-
-      TASK:
-      1. From the user's last message, EXTRACT answers for ANY of these fields if they appear:
-         ${requiredFields.join(", ")}.
-      2. If a field is not clearly answered, do not include it in extractedData.
-      3. Then ASK the next missing field question in a conversational, supportive way.
-
-      RULES:
-      - Keep the question short and human, not robotic.
-      - Use simple language (avoid medical jargon).
-      - Support both metric and imperial units.
-      - You MUST output ONLY valid JSON. No markdown, no explanations, no text before or after the JSON.
-      - Do NOT wrap your response in code blocks or backticks.
-      - Your entire response must be parseable as a single JSON object.
-
-      CRITICAL: Your response MUST be in this EXACT JSON format and nothing else:
-      {
-        "reply": "Next natural question about the next missing field",
-        "extractedData": {
-          "field1": "value",
-          "field2": "value"
+    // 2. Process the new message if it exists
+    if (lastUserMessage) {
+      if (Object.keys(currentData).length === 0) {
+        // SPECIAL CASE: First question is always Age.
+        // Validate if it looks like an age (simple heuristic: contains a number)
+        if (/\d+/.test(lastUserMessage)) {
+          // It's likely an age, save it
+          currentData['age'] = lastUserMessage;
+        } else {
+          // User said "Hi" or something irrelevant. Ignore it.
+          // We will stick to asking for Age.
         }
+      } else if (missingFields.length > 0) {
+        // The user is answering the FIRST missing field (which we asked previously)
+        const fieldBeingAnswered = missingFields[0];
+        currentData[fieldBeingAnswered] = lastUserMessage;
       }
-    `;
-    
-    // Convert the user's chat history to the format Gemini requires
-    const geminiHistory = history.map(msg => ({
-      role: msg.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: msg.content }]
-    }));
-    
-    // Prepend the system prompt to the chat history
-    const fullContents = [
-      { role: 'user', parts: [{ text: systemPrompt }] },
-      ...geminiHistory
-    ];
-
-    // Generate content with the model directly
-    const result = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: fullContents,
-    });
-    
-    const aiResponseText = result.text || '{}';
-    
-    // Clean the response text to ensure it's valid JSON
-    let cleanedResponse = aiResponseText.trim();
-    // Remove markdown code block markers if present
-    if (cleanedResponse.startsWith("```json")) {
-      cleanedResponse = cleanedResponse.replace(/^```json\s*/, "").replace(/```\s*$/, "");
-    } else if (cleanedResponse.startsWith("```")) {
-      cleanedResponse = cleanedResponse.replace(/^```\s*/, "").replace(/```\s*$/, "");
     }
-    
-    console.log("Cleaned AI response:", cleanedResponse);
-    
-    let parsedResponse;
-    try {
-      parsedResponse = JSON.parse(cleanedResponse);
-    } catch (parseError) {
-      console.error("Failed to parse AI response:", parseError);
-      console.log("Raw response:", aiResponseText);
-      
-      // Fallback to a simple response
+
+    // 3. Re-calculate missing fields after update
+    missingFields = getMissingFields(requiredFields, Object.keys(currentData));
+
+    // 4. If we still have missing fields, return the next question (LOCAL)
+    if (missingFields.length > 0) {
+      const nextField = missingFields[0];
+      const nextQuestion = QUESTION_MAP[nextField];
+
       return NextResponse.json({
-        reply: "I'm having trouble understanding my own thoughts right now. Let's try again. Could you please repeat your last question?",
-        extractedData: {},
+        reply: nextQuestion,
+        extractedData: currentData,
         isComplete: false
       });
     }
 
-    // Validate and normalize extracted data
-    const extractedData = parsedResponse.extractedData || {};
-    const normalizedData = normalizeHealthData(extractedData);
+    // 5. If ALL fields are present, GENERATE REPORT (LLM)
+    // Now we use the LLM only once at the end.
 
-    // Merge with already collected responses
-    const updatedResponses = { ...validatedResponses, ...normalizedData };
+    // Construct a comprehensive prompt
+    const systemPrompt = `
+You are Dr. Priya, a professional AI health assistant.
+The user has provided all their health details. Your task is to analyze this data and provide a personalized health assessment report.
 
-    // Find missing fields after merge
-    const updatedMissing = getMissingFields(requiredFields, Object.keys(updatedResponses));
+USER DATA:
+${JSON.stringify(currentData, null, 2)}
 
-    let nextQuestion = "";
-    if (updatedMissing.length > 0) {
-      nextQuestion = questionTemplates[updatedMissing[0]] 
-        || `Could you share your ${updatedMissing[0].replace(/_/g, " ")}?`;
+OUTPUT INSTRUCTION:
+Generate a professional, structured health assessment report.
+- Do NOT include conversational openings like "Hello" or "Thank you".
+- Start directly with a Title (e.g., "Personalized Health Assessment") or the Summary.
+- Highlight risk factors based on their data.
+- Provide actionable recommendations.
+- Keep the tone professional, empathetic, and clear.
+`;
+
+    // We can use a simpler model or the same flash model
+    const result = await genAI.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
+      config: {
+        temperature: 0
+      }
+    });
+
+    const aiResponseText = result.text || '';
+
+    // Save report to database if possible
+    try {
+      const token = req.cookies.get("token")?.value;
+      if (token) {
+        const decoded = jwt.verify(token, process.env.TOKEN_SECRET!) as { id: string };
+        const userId = decoded.id;
+
+        const newReport = new Report({
+          userId: userId,
+          reportType: 'RISK_ASSESSMENT',
+          reportData: {
+            collectedData: currentData,
+            assessment: aiResponseText,
+          }
+        });
+
+        await newReport.save();
+        console.log("Cancer assessment report saved to DB");
+      } else {
+        console.warn("No auth token found - report NOT saved to DB");
+      }
+    } catch (dbError) {
+      console.error("Failed to save report to DB:", dbError);
+      // Continue to return response even if save fails
     }
 
     const finalResponse = {
-      reply: nextQuestion || "Thanks, I have all the details I need 🙏",
-      extractedData: normalizedData,
-      isComplete: updatedMissing.length === 0,
+      reply: "Thank you for sharing your details. I have prepared your personalized health assessment report. Please click the 'Report' tab to view it.",
+      extractedData: {
+        ...currentData,
+        assessment_report: aiResponseText
+      },
+      isComplete: true,
     };
-
-    // Validate JSON shape with zod schema
-    ExtractedDataSchema.parse(finalResponse);
 
     return NextResponse.json(finalResponse);
 
-  } catch (error) {
-    console.error('Chat API Error:', error);
-    
-    // Handle different error types
-    if (error instanceof ZodError) {
-      return NextResponse.json({ error: 'Invalid request data format', details: error.issues }, { status: 400 });
-    }
-    
-    // Handle JSON parsing errors
-    if (error instanceof SyntaxError && error.message.includes('JSON')) {
-      console.error('JSON parsing error:', error.message);
-      return NextResponse.json({ 
-        reply: "I received an invalid response format. Let's try again with a simpler question.",
-        extractedData: {},
-        isComplete: false
-      }, { status: 500 });
-    }
-    
-    // Handle network or API errors
-    if (error instanceof Error) {
-      console.error(`API Error: ${error.name}: ${error.message}`);
-      
-      // If using dummy key, switch to mock mode
-      if (apiKey === 'dummy_api_key_for_testing') {
-        console.log('Switching to mock mode due to error with dummy key');
-        // Default to asking about age if we can't determine the next field
-        const nextField = 'age';
-        const lastMsg = Array.isArray(history) && history.length > 0 ? 
-          history[history.length - 1]?.content || "" : "";
-        return createMockAIResponse(nextField, lastMsg);
+  } catch (error: any) {
+    // ... existing error handling ...
+    // Extract specific API error message if available (e.g. for 429 Quota Exceeded)
+    // Structure: { error: { code, message, status } }
+    let errorMessage = error?.error?.message || error?.message || "I'm having a little trouble connecting to my brain right now.";
+
+    // Attempt to extract cleaner message if the error message is stringified JSON
+    try {
+      if (typeof errorMessage === 'string' && errorMessage.trim().startsWith('{')) {
+        const parsed = JSON.parse(errorMessage);
+        if (parsed.error && parsed.error.message) {
+          errorMessage = parsed.error.message;
+        }
       }
+    } catch (e) {
+      // Failed to parse, stick with the original message
     }
-    
-    // Generic fallback
-    return NextResponse.json({ 
-      reply: "I'm sorry, I'm having a little trouble connecting right now. Could you please try again?",
+
+    console.error('Chat API Error Details:', error);
+
+    return NextResponse.json({
+      reply: errorMessage,
       extractedData: {},
       isComplete: false
-    }, { status: 500 });
+    });
   }
 }
 
@@ -238,26 +209,4 @@ function normalizeHealthData(data: Record<string, string>) {
   }
 
   return { ...data, ...normalized };
-}
-
-/**
- * Creates a mock AI response for local development when no API key is available.
- */
-function createMockAIResponse(nextField: string, userMessage: string) {
-  console.log(`👨‍💻 Using Mock AI Response. Next question is about: "${nextField}"`);
-  
-  const defaultQuestions: Record<string, string> = {
-    gender: "Thanks! And what is your gender?",
-    height_weight: "Got it. Could you share your height and weight?",
-    smoking_status: "Okay. What about smoking – are you a current, former, or non-smoker?",
-    default: `Thanks for that. Now, could you tell me about your ${nextField.replace(/_/g, " ")}?`
-  };
-
-  const reply = defaultQuestions[nextField] || defaultQuestions.default;
-
-  return NextResponse.json({
-    reply,
-    extractedData: { message: userMessage }, 
-    isComplete: false
-  });
 }

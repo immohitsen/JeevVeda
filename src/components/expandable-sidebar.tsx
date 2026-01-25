@@ -2,6 +2,7 @@
 
 import { Home, MessageCircle, ActivitySquare, History, Shield, Scan, UserCircle, Clock, ChevronLeft } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import {
   Sidebar,
@@ -17,31 +18,19 @@ const navigationItems = [
     items: [
       { icon: <Home className="h-5 w-5 flex-shrink-0" />, label: "Dashboard", url: "/dashboard" },
       { icon: <MessageCircle className="h-5 w-5 flex-shrink-0" />, label: "Chatbot", url: "/dashboard/chatbot" },
-      { icon: <Scan className="h-5 w-5 flex-shrink-0" />, label: "Screening Tools", url: "/dashboard/screening-tools" },
-      { icon: <UserCircle className="h-5 w-5 flex-shrink-0" />, label: "Profile", url: "/dashboard/profile" },
-    ]
-  },
-  {
-    title: "Medical Tools",
-    items: [
+      { icon: <Scan className="h-5 w-5 flex-shrink-0" />, label: "MRI Analyzer", url: "/dashboard/mri-analysis" },
       { icon: <ActivitySquare className="h-5 w-5 flex-shrink-0" />, label: "Blood Analyzer", url: "/dashboard/blood-analyzer" },
       { icon: <History className="h-5 w-5 flex-shrink-0" />, label: "Report History", url: "/dashboard/report-history" },
-      { icon: <Shield className="h-5 w-5 flex-shrink-0" />, label: "Screening Recs", url: "/dashboard/screening-recs" },
-    ]
-  },
-  {
-    title: "Help",
-    items: [
-      { icon: <Clock className="h-5 w-5 flex-shrink-0" />, label: "Help Center", url: "/dashboard/help" },
     ]
   }
 ];
 
 interface ExpandableSidebarProps {
   onClose?: () => void
+  onNavigate?: () => void
 }
 
-export function ExpandableSidebar({ onClose }: ExpandableSidebarProps) {
+export function ExpandableSidebar({ onClose, onNavigate }: ExpandableSidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [open, setOpen] = useState(true)
@@ -58,7 +47,7 @@ export function ExpandableSidebar({ onClose }: ExpandableSidebarProps) {
 
   return (
     <Sidebar open={open} setOpen={setOpen} animate={true}>
-      <SidebarBody className="justify-between gap-10 z-50">
+      <SidebarBody className="justify-between gap-10 z-50 bg-[#0E2A2A] border-none">
         <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
           {/* Toggle Button Section */}
           <div className="relative z-20 py-4">
@@ -74,7 +63,7 @@ export function ExpandableSidebar({ onClose }: ExpandableSidebarProps) {
             >
               <button
                 onClick={() => setOpen(!open)}
-                className="w-8 h-8 bg-neutral-900 rounded-xl flex items-center justify-center hover:bg-neutral-800 transition-all duration-200"
+                className="w-8 h-8 bg-white/10 rounded-xl flex items-center justify-center hover:bg-white/20 transition-all duration-200"
               >
                 <motion.div
                   animate={{
@@ -107,7 +96,7 @@ export function ExpandableSidebar({ onClose }: ExpandableSidebarProps) {
                   }}
                   className="px-2 mb-3"
                 >
-                  <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wide">
+                  <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wide">
                     {section.title}
                   </h3>
                 </motion.div>
@@ -117,15 +106,18 @@ export function ExpandableSidebar({ onClose }: ExpandableSidebarProps) {
                   {section.items.map((item) => (
                     <div key={item.label} className="relative">
                       {isActive(item.url) ? (
-                        <motion.button
-                          onClick={() => handleNavigation(item.url)}
+                        <Link
+                          href={item.url}
+                          onClick={() => {
+                            if (onClose) onClose();
+                            if (onNavigate) onNavigate();
+                          }}
                           className={cn(
-                            "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 bg-neutral-100 text-neutral-900",
+                            "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 bg-white/10 text-white shadow-sm ring-1 ring-white/10 cursor-pointer",
                             !open && "justify-center px-2"
                           )}
-                          whileTap={{ scale: 0.98 }}
                         >
-                          <div className="flex-shrink-0">
+                          <div className="flex-shrink-0 text-emerald-400">
                             {item.icon}
                           </div>
                           <motion.span
@@ -141,17 +133,20 @@ export function ExpandableSidebar({ onClose }: ExpandableSidebarProps) {
                           >
                             {item.label}
                           </motion.span>
-                        </motion.button>
+                        </Link>
                       ) : (
-                        <motion.button
-                          onClick={() => handleNavigation(item.url)}
+                        <Link
+                          href={item.url}
+                          onClick={() => {
+                            if (onClose) onClose();
+                            if (onNavigate) onNavigate();
+                          }}
                           className={cn(
-                            "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 group",
+                            "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 text-neutral-400 hover:bg-white/5 hover:text-white group cursor-pointer",
                             !open && "justify-center px-2"
                           )}
-                          whileTap={{ scale: 0.98 }}
                         >
-                          <div className="group-hover:text-neutral-900 flex-shrink-0">
+                          <div className="group-hover:text-emerald-400 transition-colors flex-shrink-0">
                             {item.icon}
                           </div>
                           <motion.span
@@ -167,7 +162,7 @@ export function ExpandableSidebar({ onClose }: ExpandableSidebarProps) {
                           >
                             {item.label}
                           </motion.span>
-                        </motion.button>
+                        </Link>
                       )}
                     </div>
                   ))}
@@ -176,7 +171,73 @@ export function ExpandableSidebar({ onClose }: ExpandableSidebarProps) {
             ))}
           </div>
         </div>
+
+
+        {/* Profile Section (Bottom) */}
+        <div className="relative z-20 w-full">
+          <div className="border-t border-white/10 pt-4 mb-2">
+            {isActive('/dashboard/profile') ? (
+              <Link
+                href='/dashboard/profile'
+                onClick={() => {
+                  if (onClose) onClose();
+                  if (onNavigate) onNavigate();
+                }}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 bg-white/10 text-white shadow-sm ring-1 ring-white/10 cursor-pointer",
+                  !open && "justify-center px-2"
+                )}
+              >
+                <div className="flex-shrink-0 text-emerald-400">
+                  <UserCircle className="h-5 w-5 flex-shrink-0" />
+                </div>
+                <motion.span
+                  animate={{
+                    display: open ? "inline-block" : "none",
+                    opacity: open ? 1 : 0,
+                  }}
+                  transition={{
+                    duration: 0.3,
+                    ease: "easeInOut"
+                  }}
+                  className="whitespace-nowrap"
+                >
+                  Profile
+                </motion.span>
+              </Link>
+            ) : (
+              <Link
+                href='/dashboard/profile'
+                onClick={() => {
+                  if (onClose) onClose();
+                  if (onNavigate) onNavigate();
+                }}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 text-neutral-400 hover:bg-white/5 hover:text-white group cursor-pointer",
+                  !open && "justify-center px-2"
+                )}
+              >
+                <div className="group-hover:text-emerald-400 transition-colors flex-shrink-0">
+                  <UserCircle className="h-5 w-5 flex-shrink-0" />
+                </div>
+                <motion.span
+                  animate={{
+                    display: open ? "inline-block" : "none",
+                    opacity: open ? 1 : 0,
+                  }}
+                  transition={{
+                    duration: 0.3,
+                    ease: "easeInOut"
+                  }}
+                  className="whitespace-nowrap"
+                >
+                  Profile
+                </motion.span>
+              </Link>
+            )}
+          </div>
+        </div>
       </SidebarBody>
-    </Sidebar>
+    </Sidebar >
   )
 }

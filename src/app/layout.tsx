@@ -1,7 +1,11 @@
-import { Inter } from 'next/font/google'
+import { Inter, Outfit } from 'next/font/google'
 import "./globals.css";
 
 const inter = Inter({ subsets: ['latin'] })
+const outfit = Outfit({ 
+  subsets: ['latin'],
+  variable: '--font-outfit',
+})
 
 export default function RootLayout({
   children,
@@ -10,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="light" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={outfit.className} suppressHydrationWarning>
         {children}
       </body>
     </html>
