@@ -1,12 +1,24 @@
-// src/app/api/blood-analyzer/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI, Part } from '@google/genai';
 import { connect } from '@/dbConfig/dbConfig';
 import Report from '@/models/reportModel';
 import jwt from 'jsonwebtoken';
-// @ts-expect-error pdf-parse does not have type definitions in this environment
-import PDFParse from 'pdf-parse';
+// Polyfill for pdfjs-dist in Node.js environment
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const canvas = require('canvas');
+// Polymorph global objects expected by pdfjs-dist
+if (!global.DOMMatrix) {
+  (global as any).DOMMatrix = canvas.DOMMatrix;
+}
+if (!global.Image) {
+  (global as any).Image = canvas.Image;
+}
+if (!global.HTMLCanvasElement) {
+  (global as any).HTMLCanvasElement = canvas.Canvas;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfjsLib = require('pdfjs-dist');
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -139,14 +151,38 @@ function buildPrompt(isTextMode: boolean) {
     `;
 }
 
-// --- Async PDF Parser Function using PDFParse class ---
+// --- Async PDF Parser Function using pdfjs-dist with polyfills ---
 async function parsePDFBuffer(buffer: Buffer): Promise<string> {
   try {
-    // Extract text
-    const result = await PDFParse(buffer);
-    return result.text;
+    // Convert Buffer to Uint8Array
+    const data = new Uint8Array(buffer);
+
+    // Load document
+    const loadingTask = pdfjsLib.getDocument({
+      data: data,
+      verbosity: 0 // Suppress warnings
+    });
+
+    const pdfDocument = await loadingTask.promise;
+    let fullText = '';
+
+    // Iterate through pages
+    for (let i = 1; i <= pdfDocument.numPages; i++) {
+      const page = await pdfDocument.getPage(i);
+      const textContent = await page.getTextContent();
+
+      // Extract strings from text items
+      const pageText = textContent.items
+        .map((item: any) => item.str)
+        .join(' ');
+
+      fullText += pageText + '\n';
+    }
+
+    return fullText;
   } catch (error) {
     console.error('PDF parsing error:', error);
+    // If parsing fails, throw so we can fallback to vision API
     throw error;
   }
 }
