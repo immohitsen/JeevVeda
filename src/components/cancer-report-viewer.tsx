@@ -186,7 +186,19 @@ export function CancerReportViewer({ data, reportText, riskAssessment }: CancerR
                             <CardContent className="p-6 sm:p-8">
                                 <div className="prose prose-indigo max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap font-medium">
                                     {/* Render text with smart formatting */}
+                                    {/* Render text with smart formatting */}
                                     {reportText.split('\n').map((line, i) => {
+                                        // Helper to render text with bold support
+                                        const renderFormattedText = (text: string) => {
+                                            const parts = text.split(/(\*\*.*?\*\*)/);
+                                            return parts.map((part, j) => {
+                                                if (part.startsWith('**') && part.endsWith('**')) {
+                                                    return <strong key={j} className="text-gray-900">{part.slice(2, -2)}</strong>;
+                                                }
+                                                return part;
+                                            });
+                                        };
+
                                         // Simple markdown-like rendering for standard Markdown headers/bullets
                                         if (line.startsWith('## ') || line.startsWith('### ') || line.startsWith('**Title:')) {
                                             return <h3 key={i} className="text-lg font-bold text-indigo-950 mt-6 mb-3 first:mt-0">{line.replace(/^[#*]+\s*/, '').replace(/\*+/g, '')}</h3>;
@@ -195,21 +207,15 @@ export function CancerReportViewer({ data, reportText, riskAssessment }: CancerR
                                             return (
                                                 <div key={i} className="flex items-start gap-2 mb-2 ml-1">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2 shrink-0" />
-                                                    <span>{line.replace(/^[-*]\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</span>
+                                                    <span className="text-gray-700">{renderFormattedText(line.replace(/^[-*]\s*/, ''))}</span>
                                                 </div>
                                             );
                                         }
                                         if (line.trim() === '') return <br key={i} />;
-                                        // Bold text replacement for inline bolding
-                                        const parts = line.split(/(\*\*.*?\*\*)/);
+
                                         return (
-                                            <p key={i} className="mb-2">
-                                                {parts.map((part, j) => {
-                                                    if (part.startsWith('**') && part.endsWith('**')) {
-                                                        return <strong key={j} className="text-gray-900">{part.slice(2, -2)}</strong>;
-                                                    }
-                                                    return part;
-                                                })}
+                                            <p key={i} className="mb-2 text-gray-700">
+                                                {renderFormattedText(line)}
                                             </p>
                                         );
                                     })}

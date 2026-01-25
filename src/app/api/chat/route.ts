@@ -97,18 +97,37 @@ export async function POST(req: NextRequest) {
     // Construct a comprehensive prompt
     const systemPrompt = `
 You are Dr. Priya, a professional AI health assistant.
-The user has provided all their health details. Your task is to analyze this data and provide a personalized health assessment report.
+The user has provided their health details through a chat conversation. 
+Your task is TWO-FOLD:
+1. EXTRACT and CLEAN the data into a strict JSON format. Convert conversational answers (e.g., "I am 25 years old") into clean values (e.g., "25").
+2. ANALYZE this data and provide a personalized health assessment report.
 
-USER DATA:
+RAW USER DATA:
 ${JSON.stringify(currentData, null, 2)}
 
-OUTPUT INSTRUCTION:
-Generate a professional, structured health assessment report.
-- Do NOT include conversational openings like "Hello" or "Thank you".
-- Start directly with a Title (e.g., "Personalized Health Assessment") or the Summary.
-- Highlight risk factors based on their data.
-- Provide actionable recommendations.
-- Keep the tone professional, empathetic, and clear.
+REQUIRED JSON OUTPUT FORMAT:
+{
+  "cleaned_data": {
+    "age": "number only (e.g. '25')",
+    "gender": "Male/Female/Other",
+    "height_weight": "Standardized string (e.g. '5ft 10in, 75kg')",
+    "smoking_status": "e.g. 'Never', 'Former', 'Current'",
+    "alcohol_consumption": "Frequency",
+    "diet_habits": "Summary",
+    "physical_activity": "Summary",
+    "family_cancer_history": "Yes/No and details",
+    "symptom_digestive_swallowing": "Details or 'None'",
+    "symptom_bleeding_cough": "Details or 'None'",
+    "symptom_skin_lumps": "Details or 'None'"
+  },
+  "assessment_report": "YOUR COMPREHENSIVE REPORT HERE. Start with a Title. Use Markdown formatting (bold key terms). Highlight risk factors. Provide actionable recommendations. Tone: Professional & Empathetic."
+}
+
+IMPORTANT:
+- The output MUST be valid JSON.
+- Do not include any text outside the JSON block.
+- For "cleaned_data", ensure values are concise and standardized.
+- **Do NOT use HTML tags (like <strong>, <br>). Use standard Markdown only.**
 `;
 
     // We can use a simpler model or the same flash model
@@ -116,11 +135,30 @@ Generate a professional, structured health assessment report.
       model: 'gemini-2.5-flash',
       contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
       config: {
-        temperature: 0
+        temperature: 0.1, // Low temperature for consistent formatting
+        responseMimeType: "application/json" // Force JSON output
       }
     });
 
-    const aiResponseText = result.text || '';
+    const responseText = result.text || '{}';
+    let finalOutput;
+
+    try {
+      finalOutput = JSON.parse(responseText);
+    } catch (e) {
+      console.error("Failed to parse LLM JSON response:", responseText);
+      // Fallback if JSON parsing fails - use raw text as report and original data
+      finalOutput = {
+        cleaned_data: currentData,
+        assessment_report: responseText
+      };
+    }
+
+    const { cleaned_data, assessment_report } = finalOutput;
+
+    // Use cleaned_data for DB and Frontend
+    const dataToSave = cleaned_data || currentData;
+    const reportText = assessment_report || "Report generation failed. Please try again.";
 
     // Save report to database if possible
     try {
@@ -133,8 +171,8 @@ Generate a professional, structured health assessment report.
           userId: userId,
           reportType: 'RISK_ASSESSMENT',
           reportData: {
-            collectedData: currentData,
-            assessment: aiResponseText,
+            collectedData: dataToSave,
+            assessment: reportText,
           }
         });
 
@@ -151,8 +189,8 @@ Generate a professional, structured health assessment report.
     const finalResponse = {
       reply: "Thank you for sharing your details. I have prepared your personalized health assessment report. Please click the 'Report' tab to view it.",
       extractedData: {
-        ...currentData,
-        assessment_report: aiResponseText
+        ...dataToSave,
+        assessment_report: reportText
       },
       isComplete: true,
     };

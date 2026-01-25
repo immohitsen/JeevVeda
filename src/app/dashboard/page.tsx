@@ -374,15 +374,36 @@ export default function Dashboard() {
             <motion.div variants={itemVariants} className="grid grid-rows-3 gap-4">
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow group">
                 <div>
-                  <p className="text-sm text-slate-400 font-semibold uppercase tracking-wider mb-1">Risk Assessment</p>
-                  <p className={cn("text-2xl font-bold",
-                    healthMetrics.riskLevel === 'Low' ? 'text-emerald-600' :
-                      healthMetrics.riskLevel === 'Medium' ? 'text-amber-500' :
-                        healthMetrics.riskLevel === 'Unknown' ? 'text-slate-900' : 'text-red-600'
-                  )}>{healthMetrics.riskLevel}</p>
+                  <p className="text-sm text-slate-400 font-semibold uppercase tracking-wider mb-1">Body Mass Index</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-2xl font-bold text-slate-900">
+                      {user?.weight && user?.height
+                        ? (user.weight / ((user.height / 100) * (user.height / 100))).toFixed(1)
+                        : "N/A"}
+                    </p>
+                    <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full",
+                      (() => {
+                        if (!user?.weight || !user?.height) return "bg-slate-100 text-slate-500";
+                        const bmi = user.weight / ((user.height / 100) * (user.height / 100));
+                        if (bmi < 18.5) return "bg-blue-50 text-blue-600";
+                        if (bmi < 25) return "bg-emerald-50 text-emerald-600";
+                        if (bmi < 30) return "bg-amber-50 text-amber-600";
+                        return "bg-red-50 text-red-600";
+                      })()
+                    )}>
+                      {(() => {
+                        if (!user?.weight || !user?.height) return "Update Profile";
+                        const bmi = user.weight / ((user.height / 100) * (user.height / 100));
+                        if (bmi < 18.5) return "Underweight";
+                        if (bmi < 25) return "Normal";
+                        if (bmi < 30) return "Overweight";
+                        return "Obese";
+                      })()}
+                    </span>
+                  </div>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl group-hover:bg-slate-100 transition-colors">
-                  <Shield className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                  <Activity className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
                 </div>
               </div>
 

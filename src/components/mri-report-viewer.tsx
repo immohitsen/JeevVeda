@@ -110,20 +110,20 @@ export function MRIReportViewer({ report: rawReport, patient, onBack }: MRIRepor
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-4">
-                  <div className="grid grid-cols-1 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-muted-foreground uppercase tracking-wider">Name</p>
                       <p className="font-medium text-base">{report.patient.name}</p>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider">ID</p>
-                      <p className="font-medium text-sm break-all">{report.patient.id}</p>
-                    </div>
                     <div>
                       <p className="text-xs text-muted-foreground uppercase tracking-wider">Age/Sex</p>
                       <p className="font-medium">{report.patient.age} / {report.patient.sex}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1">
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">ID</p>
+                      <p className="font-medium text-sm break-all">{report.id}</p>
                     </div>
                   </div>
                   <div>
