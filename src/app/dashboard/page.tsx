@@ -15,8 +15,11 @@ import {
   Sparkles,
   ChevronRight,
   Clock,
-  ArrowRight
+  ArrowRight,
+  MoreVertical,
+  Eye
 } from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { motion, AnimatePresence, type Variants } from "motion/react"
 import { cn } from "@/lib/utils"
 
@@ -61,10 +64,31 @@ export default function Dashboard() {
   // Use separate state for mounted to handle hydration mismatch
   const [mounted, setMounted] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
+
+  // Helper functions for table style
+  const getTypeName = (type: string) => {
+    switch (type) {
+      case 'BLOOD_ANALYSIS': return 'Blood Analysis'
+      case 'MRI_SCAN': return 'MRI Scan'
+      case 'RISK_ASSESSMENT': return 'Risk Assessment'
+      default: return type
+    }
+  }
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'BLOOD_ANALYSIS': return 'text-rose-600 bg-rose-50'
+      case 'MRI_SCAN': return 'text-blue-600 bg-blue-50'
+      case 'RISK_ASSESSMENT': return 'text-emerald-600 bg-emerald-50'
+      default: return 'text-slate-600 bg-slate-50'
+    }
+  }
+
   const [recentReports, setRecentReports] = useState<Array<{
     id: string;
     fullId: string;
     type: string;
+    rawType: string;
     date: string;
     status: string;
     riskLevel: string;
@@ -122,6 +146,7 @@ export default function Dashboard() {
               id: report._id.slice(-8).toUpperCase(),
               fullId: report._id,
               type,
+              rawType: report.reportType, // Added rawType for styling helpers
               date: new Date(report.createdAt).toLocaleDateString(),
               status,
               riskLevel,
@@ -219,7 +244,7 @@ export default function Dashboard() {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="min-h-screen bg-slate-50/50"
+      className="min-h-screen bg-slate-50/50 w-full max-w-[100vw] overflow-x-hidden"
     >
       {/* Background Decor Removed - Moved to Layout for performance */}
 
@@ -231,7 +256,7 @@ export default function Dashboard() {
             className="flex flex-col md:flex-row md:items-center justify-between gap-6"
           >
             <div className="flex-1 space-y-1.5">
-              <motion.div
+              {/* <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
@@ -239,7 +264,7 @@ export default function Dashboard() {
               >
                 <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
                 <span>AI Health Assistant Active</span>
-              </motion.div>
+              </motion.div> */}
               <h1 className="text-3xl sm:text-4xl font-bold text-slate-800 tracking-tight">
                 {getGreeting()}, <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">{user?.fullName?.split(' ')[0] || 'User'}</span>
               </h1>
@@ -253,7 +278,7 @@ export default function Dashboard() {
               className="relative group rounded-2xl overflow-hidden shadow-lg border-2 border-white"
             >
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent z-10 pointer-events-none" />
-              <video
+              {/* <video
                 autoPlay
                 loop
                 muted
@@ -262,7 +287,7 @@ export default function Dashboard() {
               >
                 <source src="/videos/stock/cancer-cells.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
-              </video>
+              </video> */}
               <div className="absolute bottom-2 right-2 z-20">
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]"></div>
               </div>
@@ -279,7 +304,7 @@ export default function Dashboard() {
             {/* Hero Health Card */}
             <motion.div
               variants={itemVariants}
-              className="lg:col-span-2 relative overflow-hidden rounded-2xl bg-slate-900 text-white p-8 shadow-xl"
+              className="lg:col-span-2 relative overflow-hidden rounded-2xl bg-slate-900 text-white p-6 sm:p-8 shadow-xl"
             >
               <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px] translate-y-1/3 -translate-x-1/3" />
@@ -296,15 +321,15 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-6 pt-2">
-                    <div className="space-y-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-2">
+                    <div className="flex items-center sm:block space-y-0 sm:space-y-1 justify-between sm:justify-start">
                       <p className="text-sm text-white/50 uppercase tracking-wider font-semibold">Overall Score</p>
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-4xl font-bold tracking-tight">{healthMetrics.wellnessScore}</span>
                         <span className="text-sm text-emerald-400 font-medium">%</span>
                       </div>
                     </div>
-                    <div className="space-y-1 border-l border-white/10 pl-8">
+                    <div className="flex items-center sm:block space-y-0 sm:space-y-1 justify-between sm:justify-start sm:border-l border-white/10 pt-4 sm:pt-0 border-t sm:border-t-0 sm:pl-8">
                       <p className="text-sm text-white/50 uppercase tracking-wider font-semibold">Action Required</p>
                       <div className="flex items-baseline gap-1.5">
                         <span className={cn("text-4xl font-bold tracking-tight",
@@ -313,7 +338,7 @@ export default function Dashboard() {
                         <span className="text-sm text-white/60 font-medium">pending</span>
                       </div>
                     </div>
-                    <div className="space-y-1 border-l border-white/10 pl-8">
+                    <div className="flex items-center sm:block space-y-0 sm:space-y-1 justify-between sm:justify-start sm:border-l border-white/10 pt-4 sm:pt-0 border-t sm:border-t-0 sm:pl-8">
                       <p className="text-sm text-white/50 uppercase tracking-wider font-semibold">Total Reports</p>
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-4xl font-bold tracking-tight">{healthMetrics.totalReports}</span>
@@ -439,7 +464,7 @@ export default function Dashboard() {
             </Button>
           </div>
 
-          <motion.div variants={itemVariants} className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+          <motion.div variants={itemVariants} className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden w-full max-w-full">
             {loadingReports ? (
               <div className="p-8 space-y-4">
                 {[1, 2, 3].map((i) => (
@@ -468,10 +493,9 @@ export default function Dashboard() {
                 <table className="w-full">
                   <thead className="bg-slate-50/50">
                     <tr>
-                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Report</th>
+                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Report ID</th>
+                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</th>
                       <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Date</th>
-                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
-                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell">Risk Level</th>
                       <th className="text-right py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Action</th>
                     </tr>
                   </thead>
@@ -484,51 +508,37 @@ export default function Dashboard() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.05 }}
                           whileHover={{ backgroundColor: "rgba(248,250,252, 0.8)" }}
-                          className="group cursor-pointer"
+                          onClick={() => router.push(`/dashboard/report/${report.fullId}`)}
+                          className="group cursor-pointer active:bg-slate-50"
                         >
                           <td className="py-4 px-6">
-                            <div className="flex items-center gap-3">
-                              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center",
-                                report.color === 'green' ? 'bg-emerald-50 text-emerald-600' :
-                                  report.color === 'red' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
-                              )}>
-                                <report.icon className="w-5 h-5" />
-                              </div>
-                              <div>
-                                <p className="font-bold text-slate-900 text-sm">{report.type}</p>
-                                <p className="text-xs text-slate-500 font-mono">#{report.id}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-4 px-6 hidden sm:table-cell">
-                            <p className="text-sm text-slate-600">{report.date}</p>
-                          </td>
-                          <td className="py-4 px-6">
-                            <div className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border",
-                              report.status.includes('Normal') || report.status.includes('Completed')
-                                ? "bg-emerald-50/50 border-emerald-100 text-emerald-700"
-                                : "bg-amber-50/50 border-amber-100 text-amber-700"
-                            )}>
-                              {report.status.includes('Normal') || report.status.includes('Completed') ? (
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                              ) : (
-                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></div>
-                              )}
-                              {report.status}
-                            </div>
-                          </td>
-                          <td className="py-4 px-6 hidden md:table-cell">
-                            <span className={cn("text-sm font-medium",
-                              report.riskLevel === 'Low' ? "text-emerald-600" :
-                                report.riskLevel === 'Medium' ? "text-amber-600" : "text-red-600"
-                            )}>
-                              {report.riskLevel}
+                            <span className="font-mono text-sm font-medium text-slate-700">
+                              #{report.id}
                             </span>
                           </td>
-                          <td className="py-4 px-6 text-right">
-                            <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                              Details <ArrowRight className="w-4 h-4 ml-1" />
-                            </Button>
+                          <td className="py-4 px-6">
+                            <span className={cn("inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border whitespace-nowrap", getTypeColor(report.rawType).replace('text-', 'border-').replace('bg-', 'bg-opacity-10 '))} >
+                              {getTypeName(report.rawType)}
+                            </span>
+                          </td>
+                          <td className="py-4 px-6 hidden sm:table-cell">
+                            <p className="text-sm text-slate-600 whitespace-nowrap">{report.date}</p>
+                          </td>
+                          <td className="py-4 px-6 text-right relative" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu modal={false}>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-slate-200 rounded-full">
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreVertical className="h-4 w-4 text-slate-800" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => router.push(`/dashboard/report/${report.fullId}`)}>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  <span>View Report</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </td>
                         </motion.tr>
                       ))}

@@ -168,68 +168,10 @@ export function ExpandableSidebar({ onClose, onNavigate }: ExpandableSidebarProp
         </div>
 
 
-        {/* Profile Section (Bottom) */}
+        {/* (Bottom) */}
         <div className="relative z-20 w-full">
-          <div className="border-t border-white/10 pt-4 mb-2">
-            {isActive('/dashboard/profile') ? (
-              <Link
-                href='/dashboard/profile'
-                onClick={() => {
-                  if (onClose) onClose();
-                  if (onNavigate) onNavigate();
-                }}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 bg-white/10 text-white shadow-sm ring-1 ring-white/10 cursor-pointer",
-                  !open && "justify-center px-2"
-                )}
-              >
-                <div className="flex-shrink-0 text-emerald-400">
-                  <UserCircle className="h-5 w-5 flex-shrink-0" />
-                </div>
-                <motion.span
-                  animate={{
-                    display: open ? "inline-block" : "none",
-                    opacity: open ? 1 : 0,
-                  }}
-                  transition={{
-                    duration: 0.3,
-                    ease: "easeInOut"
-                  }}
-                  className="whitespace-nowrap"
-                >
-                  Profile
-                </motion.span>
-              </Link>
-            ) : (
-              <Link
-                href='/dashboard/profile'
-                onClick={() => {
-                  if (onClose) onClose();
-                  if (onNavigate) onNavigate();
-                }}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 text-neutral-400 hover:bg-white/5 hover:text-white group cursor-pointer",
-                  !open && "justify-center px-2"
-                )}
-              >
-                <div className="group-hover:text-emerald-400 transition-colors flex-shrink-0">
-                  <UserCircle className="h-5 w-5 flex-shrink-0" />
-                </div>
-                <motion.span
-                  animate={{
-                    display: open ? "inline-block" : "none",
-                    opacity: open ? 1 : 0,
-                  }}
-                  transition={{
-                    duration: 0.3,
-                    ease: "easeInOut"
-                  }}
-                  className="whitespace-nowrap"
-                >
-                  Profile
-                </motion.span>
-              </Link>
-            )}
+          <div className="border-t border-white/10 pt-4 mb-2 text-center text-white/50 text-sm">
+            Jeev Veda © {new Date().getFullYear()}
           </div>
         </div>
       </SidebarBody>

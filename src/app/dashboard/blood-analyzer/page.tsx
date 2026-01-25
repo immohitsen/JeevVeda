@@ -282,7 +282,7 @@ export default function BloodAnalyzerPage() {
   }
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 max-w-5xl mx-auto">
+    <div className="max-w-full px-4 md:px-8 lg:px-12 pt-4 md:pt-8">
       {/* Header */}
       <div className="flex items-center gap-4 border-b border-gray-100 pb-6">
         <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">

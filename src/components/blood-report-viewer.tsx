@@ -58,9 +58,9 @@ export function BloodReportViewer({ report }: BloodReportViewerProps) {
           <Badge className={`px-4 py-1.5 text-sm sm:text-base border ${isLowRisk ? "bg-green-100 text-green-800 hover:bg-green-200 border-green-200" : "bg-red-100 text-red-800 hover:bg-red-200 border-red-200"}`}>
             Risk Profile: {isLowRisk ? "Low" : (reportData.cancerRiskAssessment?.overallRisk?.toUpperCase() || "UNKNOWN")}
           </Badge>
-          <Badge variant="outline" className="px-4 py-1.5 text-sm sm:text-base">
+          {/* <Badge variant="outline" className="px-4 py-1.5 text-sm sm:text-base">
             AI Verified
-          </Badge>
+          </Badge> */}
         </div>
       </div>
 

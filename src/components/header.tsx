@@ -72,18 +72,18 @@ export function Header({ onMenuClick }: HeaderProps) {
 
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Search Bar - Hidden on mobile */}
-        <div className="relative hidden md:block">
+        {/* <div className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
           <input
             type="text"
             placeholder="Search reports, patients..."
             className="pl-10 pr-4 py-2 w-48 lg:w-64 border border-neutral-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all"
           />
-        </div>
+        </div> */}
 
         {/* Add Button - Hidden on mobile */}
         <Button variant="primary" size="sm" className="hidden sm:flex"
-        onClick={() => router.push('/dashboard/dicom-viewer')}>
+          onClick={() => router.push('/dashboard/dicom-viewer')}>
           <span className="hidden lg:inline">DICOM Viewer</span>
         </Button>
 
@@ -117,9 +117,8 @@ export function Header({ onMenuClick }: HeaderProps) {
                   </p>
                   <p className="text-xs text-gray-500">User</p>
                 </div>
-                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform hidden sm:block ${
-                  isDropdownOpen ? 'rotate-180' : ''
-                }`} />
+                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform hidden sm:block ${isDropdownOpen ? 'rotate-180' : ''
+                  }`} />
               </button>
             ) : (
               // Not authenticated - fallback

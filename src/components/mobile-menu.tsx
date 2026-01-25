@@ -138,26 +138,8 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
             {/* Profile Section (Bottom) */}
             <div className="p-4 border-t border-white/10 bg-[#0E2A2A]">
-              <button
-                onClick={() => handleNavigation('/dashboard/profile')}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200",
-                  isActive('/dashboard/profile')
-                    ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10"
-                    : "text-neutral-400 hover:bg-white/5 hover:text-white group"
-                )}
-              >
-                <div className={cn(
-                  "flex-shrink-0 transition-colors",
-                  isActive('/dashboard/profile') ? "text-emerald-400" : "group-hover:text-emerald-400"
-                )}>
-                  <UserCircle className="h-5 w-5" />
-                </div>
-                Profile
-              </button>
-
-              <div className="mt-4 text-xs text-white/20 text-center font-mono">
-                v1.0.0
+              <div className="mt-4 text-sm text-white/50 text-center mb-4 font-mono">
+                Jeev Veda © {new Date().getFullYear()}
               </div>
             </div>
           </motion.div>

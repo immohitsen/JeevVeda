@@ -31,7 +31,7 @@ export default function DashboardLayout({
 
   return (
     <div className={cn(
-      "flex h-screen bg-[#0E2A2A] overflow-hidden"
+      "flex min-h-screen lg:h-screen bg-[#0E2A2A] lg:overflow-hidden overflow-x-hidden"
     )}>
       {/* Desktop Sidebar - Hidden on mobile */}
       <div className="hidden lg:block bg-[#0E2A2A]">
@@ -48,13 +48,13 @@ export default function DashboardLayout({
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col p-4 h-full">
+      <div className="flex-1 flex flex-col sm:p-4 h-full lg:h-full w-full max-w-[100vw] overflow-x-hidden">
         {/* Inner White Container */}
-        <div className="flex-1 flex flex-col bg-slate-50 rounded-3xl overflow-hidden shadow-2xl relative">
+        <div className="flex-1 flex flex-col bg-slate-50 sm:rounded-3xl lg:overflow-hidden shadow-2xl relative min-h-[calc(100vh-2rem)] sm:min-h-0 w-full max-w-full">
 
 
-          {/* Header - Full Width within the card */}
-          <div className="z-20 bg-white border-b border-gray-100 relative">
+          {/* Header - Sticky on mobile, relative on desktop */}
+          <div className="z-20 bg-white border-b border-gray-100 sticky top-0 lg:relative">
             <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
           </div>
 
@@ -67,7 +67,7 @@ export default function DashboardLayout({
           {/* Main Content - Scrollable */}
           <div className={cn(
             "flex-1 flex flex-col z-10 relative will-change-transform", // Added z-10 to sit above background, and will-change
-            pathname?.includes('chatbot') ? "overflow-hidden" : "overflow-y-auto overscroll-y-contain" // Added overscroll behavior
+            pathname?.includes('chatbot') ? "h-[calc(100vh-4rem)] lg:h-auto overflow-hidden" : "lg:overflow-y-auto lg:overscroll-y-contain" // Native scroll on mobile, inner on desktop
           )}>
             <main className="w-full flex-1 flex flex-col relative min-h-0">
               {isNavigating && (

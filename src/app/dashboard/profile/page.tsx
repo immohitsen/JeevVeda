@@ -1,8 +1,38 @@
 "use client"
 
 import { useUser } from "@/hooks/useUser"
-import { User as UserIcon, Mail, Calendar, Ruler, Weight, Heart, Edit, Shield, Clock } from "lucide-react"
+import {
+  User as UserIcon,
+  Mail,
+  Calendar,
+  Ruler,
+  Weight,
+  Heart,
+  Edit,
+  Shield,
+  Clock,
+  MapPin,
+  Phone,
+  Activity,
+  ChevronRight,
+} from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { motion } from "motion/react"
+import { cn } from "@/lib/utils"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function ProfilePage() {
   const { user, loading, isAuthenticated } = useUser()
@@ -32,11 +62,11 @@ export default function ProfilePage() {
     const birthDate = new Date(dateOfBirth)
     let age = today.getFullYear() - birthDate.getFullYear()
     const monthDiff = today.getMonth() - birthDate.getMonth()
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       age--
     }
-    
+
     return age
   }
 
@@ -47,27 +77,31 @@ export default function ProfilePage() {
     return bmi.toFixed(1)
   }
 
-  // Get BMI category
+  // Get BMI category - Updated colors for Emerald theme
   const getBMICategory = (bmi: number) => {
-    if (bmi < 18.5) return { category: 'Underweight', color: 'text-blue-600' }
-    if (bmi < 25) return { category: 'Normal', color: 'text-green-600' }
-    if (bmi < 30) return { category: 'Overweight', color: 'text-yellow-600' }
-    return { category: 'Obese', color: 'text-red-600' }
+    if (bmi < 18.5) return { category: 'Underweight', color: 'bg-blue-100 text-blue-700 border-blue-200' }
+    if (bmi < 25) return { category: 'Normal', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' }
+    if (bmi < 30) return { category: 'Overweight', color: 'bg-amber-100 text-amber-700 border-amber-200' }
+    return { category: 'Obese', color: 'bg-red-100 text-red-700 border-red-200' }
   }
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-48 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-96 mb-8"></div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1">
-              <div className="bg-gray-200 rounded-xl h-96"></div>
-            </div>
-            <div className="lg:col-span-2">
-              <div className="bg-gray-200 rounded-xl h-96"></div>
-            </div>
+      <div className="p-8 max-w-7xl mx-auto space-y-8">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-4">
+            <Skeleton className="h-[400px] w-full rounded-xl" />
+          </div>
+          <div className="lg:col-span-8 space-y-6">
+            <Skeleton className="h-[200px] w-full rounded-xl" />
+            <Skeleton className="h-[300px] w-full rounded-xl" />
           </div>
         </div>
       </div>
@@ -76,210 +110,261 @@ export default function ProfilePage() {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className="p-8 text-center">
-        <div className="max-w-md mx-auto">
-          <UserIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Not Authenticated</h1>
-          <p className="text-gray-600 mb-6">Please log in to view your profile.</p>
-          <button
-            onClick={() => router.push('/login')}
-            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            Go to Login
-          </button>
-        </div>
+      <div className="min-h-[60vh] flex items-center justify-center p-8">
+        <Card className="max-w-md w-full border-dashed">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+              <UserIcon className="w-8 h-8 text-slate-400" />
+            </div>
+            <CardTitle className="text-xl">Authentication Required</CardTitle>
+            <CardDescription>Please log in to view your medical profile.</CardDescription>
+          </CardHeader>
+          <CardFooter className="justify-center pb-8">
+            <Button onClick={() => router.push('/login')} className="bg-emerald-600 hover:bg-emerald-700">
+              Go to Login
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     )
   }
 
   const bmi = calculateBMI(user.weight, user.height)
   const bmiCategory = getBMICategory(parseFloat(bmi))
+  const age = calculateAge(user.dateOfBirth)
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
-        <p className="text-base leading-relaxed text-gray-600">
-          View and manage your personal information and health details
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Profile Card */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="text-center mb-6">
-              <div className="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-purple-600">
-                  {getInitials(user.fullName)}
-                </span>
-              </div>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-1">{user.fullName}</h2>
-              <p className="text-gray-600">{user.email}</p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <Calendar className="w-5 h-5 text-gray-500" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Age</p>
-                  <p className="text-sm text-gray-600">{calculateAge(user.dateOfBirth)} years old</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <UserIcon className="w-5 h-5 text-gray-500" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Gender</p>
-                  <p className="text-sm text-gray-600">{user.gender}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <Heart className="w-5 h-5 text-gray-500" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Family History</p>
-                  <p className="text-sm text-gray-600">
-                    {user.familyHistory ? 'Yes' : 'No'} cancer history
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <button className="w-full mt-6 py-3 px-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
-              <Edit className="w-4 h-4" />
-              Edit Profile
-            </button>
-          </div>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+      >
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Patient Profile</h1>
+          <p className="text-slate-500 mt-1">Manage your personal health records and settings</p>
         </div>
+        <Button variant="outline" className="gap-2 border-slate-200">
+          <Edit className="w-4 h-4" /> Edit Profile
+        </Button>
+      </motion.div>
 
-        {/* Details and Health Info */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Personal Information */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Personal Information</h3>
-              <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                <Edit className="w-4 h-4" />
-              </button>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Full Name</label>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <UserIcon className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-900">{user.fullName}</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Email Address</label>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Mail className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-900">{user.email}</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Date of Birth</label>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Calendar className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-900">{formatDate(user.dateOfBirth)}</span>
-                  </div>
+        {/* Left Column - Identity Card */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1 }}
+          className="lg:col-span-4 space-y-6"
+        >
+          <Card className="overflow-hidden border-slate-200 shadow-md">
+            {/* <div className="h-32 bg-gradient-to-r from-emerald-600 to-teal-500 relative">
+              <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20"></div>
+            </div> */}
+            <CardContent className="relative pt-0 px-6 pb-8 text-center sm:text-left">
+              <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 mb-10">
+                <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
+                  {/* <AvatarImage src={user.image} /> */}
+                  <AvatarFallback className="bg-slate-100 text-emerald-700 text-2xl font-bold">
+                    {getInitials(user.fullName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="mb-2 text-center sm:text-left">
+                  <h2 className="text-2xl font-bold text-slate-900">{user.fullName}</h2>
+                  <p className="text-slate-500 font-medium">ID: #{user.id.slice(-8).toUpperCase()}</p>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Gender</label>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <UserIcon className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-900">{user.gender}</span>
-                  </div>
+                <div className="flex items-center gap-3 text-slate-600">
+                  <Mail className="w-4 h-4 text-emerald-600" />
+                  <span className="text-sm">{user.email}</span>
                 </div>
+                {/* <div className="flex items-center gap-3 text-slate-600">
+                  <Phone className="w-4 h-4 text-emerald-600" />
+                  <span className="text-sm">+91 98765 43210</span>
+                </div> */}
+                {/* <div className="flex items-center gap-3 text-slate-600">
+                  <MapPin className="w-4 h-4 text-emerald-600" />
+                  <span className="text-sm">Mumbai, India</span>
+                </div> */}
+              </div>
 
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Height</label>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Ruler className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-900">{user.height} cm</span>
-                  </div>
+              <Separator className="my-6 bg-slate-100" />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                  <p className="text-xs text-slate-500 uppercase font-semibold">Blood Type</p>
+                  <p className="text-lg font-bold text-slate-800">O+</p>
                 </div>
-
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Weight</label>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Weight className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-900">{user.weight} kg</span>
-                  </div>
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                  <p className="text-xs text-slate-500 uppercase font-semibold">Gender</p>
+                  <p className="text-lg font-bold text-slate-800 capitalize">{user.gender}</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* <Card className="bg-emerald-50 border-emerald-100">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-white rounded-full shadow-sm">
+                  <Shield className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-emerald-900">Protected Health Data</h3>
+                  <p className="text-sm text-emerald-700/80 mt-1">Your personal health information is encrypted and secure.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card> */}
+        </motion.div>
+
+        {/* Right Column - Details & Metrics */}
+        <div className="lg:col-span-8 space-y-6">
+
+          {/* Vitals Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-emerald-500" /> Current Vitals
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                      <Calendar className="w-5 h-5" />
+                    </div>
+                    <Badge variant="secondary" className="bg-slate-100 text-slate-600">Years</Badge>
+                  </div>
+                  <div>
+                    <span className="text-3xl font-bold text-slate-900">{age}</span>
+                    <p className="text-sm text-slate-500">Age</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                      <Weight className="w-5 h-5" />
+                    </div>
+                    <Badge variant="outline" className={cn("font-medium", bmiCategory.color)}>
+                      {bmiCategory.category}
+                    </Badge>
+                  </div>
+                  <div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-bold text-slate-900">{bmi}</span>
+                      <span className="text-sm text-slate-400">BMI</span>
+                    </div>
+                    <p className="text-sm text-slate-500">{user.weight} kg / {user.height} cm</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
+                      <Heart className="w-5 h-5" />
+                    </div>
+                    <Badge variant="outline" className={user.familyHistory ? "bg-rose-50 text-rose-700 border-rose-200" : "bg-slate-50 text-slate-600"}>
+                      History
+                    </Badge>
+                  </div>
+                  <div>
+                    <span className="text-xl font-bold text-slate-900">{user.familyHistory ? 'Yes' : 'No'}</span>
+                    <p className="text-sm text-slate-500">Cancer History</p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Health Metrics */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6">Health Metrics</h3>
+          {/* Detailed Info */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className="border-slate-200 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <UserIcon className="w-5 h-5 text-emerald-500" /> Personal Details
+                </CardTitle>
+                <CardDescription>
+                  Review your registration information
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Full Name</label>
+                    <p className="text-slate-800 font-medium">{user.fullName}</p>
+                  </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Calendar className="w-6 h-6 text-blue-600" />
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Date of Birth</label>
+                    <p className="text-slate-800 font-medium">{formatDate(user.dateOfBirth)}</p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Email Address</label>
+                    <p className="text-slate-800 font-medium">{user.email}</p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Joined On</label>
+                    <p className="text-slate-800 font-medium">{new Date().toLocaleDateString()}</p>
+                  </div>
                 </div>
-                <p className="text-2xl font-bold text-blue-900 mb-1">{calculateAge(user.dateOfBirth)}</p>
-                <p className="text-sm text-blue-700">Years Old</p>
-              </div>
-
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Weight className="w-6 h-6 text-green-600" />
-                </div>
-                <p className="text-2xl font-bold text-green-900 mb-1">{bmi}</p>
-                <p className="text-sm text-green-700">BMI</p>
-                <p className={`text-xs font-medium ${bmiCategory.color}`}>{bmiCategory.category}</p>
-              </div>
-
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Heart className="w-6 h-6 text-purple-600" />
-                </div>
-                <p className="text-2xl font-bold text-purple-900 mb-1">
-                  {user.familyHistory ? 'Yes' : 'No'}
-                </p>
-                <p className="text-sm text-purple-700">Family History</p>
-                <p className="text-xs text-purple-600">Cancer related</p>
-              </div>
-            </div>
-          </div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Quick Actions */}
-          <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-6 border border-purple-100">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Actions</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button className="flex items-center gap-3 p-4 bg-white rounded-lg hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-purple-600" />
+              <Button variant="outline" className="h-auto p-4 justify-start space-x-4 border-slate-200 hover:border-emerald-200 hover:bg-emerald-50/50">
+                <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+                  <Clock className="w-5 h-5" />
                 </div>
                 <div className="text-left">
-                  <p className="font-medium text-gray-900">Health Screening</p>
-                  <p className="text-sm text-gray-600">Schedule your next screening</p>
+                  <Link href="/dashboard/report-history">
+                    <div className="font-semibold text-slate-900">Report History</div>
+                    <div className="text-xs text-slate-500 font-normal">View your past screenings an reports</div>
+                  </Link>
                 </div>
-              </button>
+                <ChevronRight className="w-4 h-4 text-slate-300 ml-auto" />
+              </Button>
 
-              <button className="flex items-center gap-3 p-4 bg-white rounded-lg hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-blue-600" />
+              {/* <Button variant="outline" className="h-auto p-4 justify-start space-x-4 border-slate-200 hover:border-blue-200 hover:bg-blue-50/50">
+                <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                  <Shield className="w-5 h-5" />
                 </div>
                 <div className="text-left">
-                  <p className="font-medium text-gray-900">Medical History</p>
-                  <p className="text-sm text-gray-600">View your health records</p>
+                  <div className="font-semibold text-slate-900">Privacy Settings</div>
+                  <div className="text-xs text-slate-500 font-normal">Manage data sharing & security</div>
                 </div>
-              </button>
+                <ChevronRight className="w-4 h-4 text-slate-300 ml-auto" />
+              </Button> */}
             </div>
-          </div>
+          </motion.div>
+
         </div>
       </div>
     </div>

@@ -171,7 +171,6 @@ export function MRIReportViewer({ report: rawReport, patient, onBack }: MRIRepor
                           <Brain className="w-5 h-5" />
                           AI Insights
                         </CardTitle>
-                        {/* Badge Removed as per user request */}
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4 pt-4">

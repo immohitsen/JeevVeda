@@ -130,7 +130,7 @@ export default function ReportHistoryPage() {
   const riskAssessments = reports.filter(r => r.reportType === 'RISK_ASSESSMENT').length
 
   return (
-    <div className="h-screen flex flex-col bg-[#F5F7FA] font-sans text-slate-900 overflow-hidden">
+    <div className="h-screen max-w-full flex flex-col bg-[#F5F7FA] font-sans text-slate-900 overflow-hidden px-8 pt-4">
 
       {/* Fixed Top Section: Header & Stats */}
       <div className="flex-none p-6 pb-0 space-y-6">
@@ -192,7 +192,7 @@ export default function ReportHistoryPage() {
               </div>
 
               {/* Filter Buttons */}
-              <div className="flex items-center bg-white rounded-full border border-slate-200 p-1 shadow-sm w-full sm:w-auto justify-center sm:justify-start">
+              {/* <div className="flex items-center bg-white rounded-full border border-slate-200 p-1 shadow-sm w-full sm:w-auto justify-center sm:justify-start">
                 <button className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 rounded-full flex items-center justify-center gap-1">
                   <Filter className="w-3 h-3" /> Filter
                 </button>
@@ -200,90 +200,94 @@ export default function ReportHistoryPage() {
                 <button className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 rounded-full flex items-center justify-center gap-1">
                   <ArrowUpDown className="w-3 h-3" /> Sort
                 </button>
-              </div>
+              </div> */}
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-            {/* Table Header */}
-            <div className="rounded-t-xl sticky top-0 grid grid-cols-12 gap-4 px-6 py-4 bg-slate-50 border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider backdrop-blur-sm">
-              <div className="col-span-3">Report ID</div>
-              <div className="col-span-4">Type</div>
-              <div className="col-span-3">Date</div>
-              <div className="col-span-2 text-right">Action</div>
-            </div>
-
-            {/* List Content */}
-            <div className="divide-y divide-slate-100">
-              {loading ? (
-                <div className="p-12 text-center">
-                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500 mb-3" />
-                  <p className="text-slate-500 text-sm">Loading records...</p>
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden w-full max-w-full">
+            {loading ? (
+              <div className="p-12 text-center">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500 mb-3" />
+                <p className="text-slate-500 text-sm">Loading records...</p>
+              </div>
+            ) : filteredReports.length === 0 ? (
+              <div className="p-16 text-center">
+                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-5 h-5 text-slate-400" />
                 </div>
-              ) : filteredReports.length === 0 ? (
-                <div className="p-16 text-center">
-                  <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Search className="w-5 h-5 text-slate-400" />
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-800">No reports found</h3>
-                  <p className="text-slate-400 text-xs mt-1">Try adjusting your search or filters.</p>
-                </div>
-              ) : (
-                filteredReports.map((report) => (
-                  <div
-                    key={report._id}
-                    className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-slate-50/50 transition-colors group"
-                  >
-                    {/* ID */}
-                    <div className="col-span-3">
-                      <span className="font-mono text-sm font-medium text-slate-700">
-                        #{report._id.slice(-6).toUpperCase()}
-                      </span>
-                    </div>
+                <h3 className="text-sm font-bold text-slate-800">No reports found</h3>
+                <p className="text-slate-400 text-xs mt-1">Try adjusting your search or filters.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50/50">
+                    <tr>
+                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Report ID</th>
+                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</th>
+                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Date</th>
+                      <th className="text-right py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredReports.map((report) => (
+                      <tr
+                        key={report._id}
+                        className="group hover:bg-slate-50/80 transition-colors active:bg-slate-100"
+                      >
+                        {/* ID */}
+                        <td className="py-4 px-6">
+                          <span className="font-mono text-sm font-medium text-slate-700">
+                            #{report._id.slice(-6).toUpperCase()}
+                          </span>
+                        </td>
 
-                    {/* Type Badge */}
-                    <div className="col-span-4">
-                      <span className={cn("inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border", getTypeColor(report.reportType).replace('text-', 'border-').replace('bg-', 'bg-opacity-10 '))} >
-                        {getTypeName(report.reportType)}
-                      </span>
-                    </div>
+                        {/* Type Badge */}
+                        <td className="py-4 px-6">
+                          <span className={cn("inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border whitespace-nowrap", getTypeColor(report.reportType).replace('text-', 'border-').replace('bg-', 'bg-opacity-10 '))} >
+                            {getTypeName(report.reportType)}
+                          </span>
+                        </td>
 
-                    {/* Date */}
-                    <div className="col-span-3">
-                      <p className="text-sm text-slate-600">{new Date(report.createdAt).toLocaleDateString()}</p>
-                    </div>
+                        {/* Date */}
+                        <td className="py-4 px-6 hidden sm:table-cell">
+                          <p className="text-sm text-slate-600 whitespace-nowrap">{new Date(report.createdAt).toLocaleDateString()}</p>
+                        </td>
 
-                    {/* Actions */}
-                    <div className="col-span-2 flex justify-end">
-                      <DropdownMenu key={`menu-${report._id}-${reportToDelete}`} modal={false}>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreVertical className="h-4 w-4 text-slate-800" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => router.push(`/dashboard/report/${report._id}`)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            <span>View Report</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={(e) => {
-                              e.preventDefault()
-                              initiateDelete(report._id)
-                            }}
-                            className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            <span>Delete</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+                        {/* Actions */}
+                        <td className="py-4 px-6 text-right relative" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu key={`menu-${report._id}-${reportToDelete}`} modal={false}>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="cursor-pointer h-8 w-8 p-0 hover:bg-slate-200 rounded-full">
+                                <span className="sr-only">Open menu</span>
+                                <MoreVertical className="h-4 w-4 text-slate-800" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => router.push(`/dashboard/report/${report._id}`)}
+                                className="cursor-pointer">
+                                <Eye className="mr-2 h-4 w-4" />
+                                <span>View Report</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={(e) => {
+                                  e.preventDefault()
+                                  initiateDelete(report._id)
+                                }}
+                                className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>Delete</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* Pagination Footer */}

@@ -52,9 +52,9 @@ export function CancerReportViewer({ data, reportText, riskAssessment }: CancerR
                             {riskAssessment.riskCategory} Risk
                         </Badge>
                     )}
-                    <Badge variant="outline" className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 border-blue-200">
+                    {/* <Badge variant="outline" className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 border-blue-200">
                         AI Enhanced
-                    </Badge>
+                    </Badge> */}
                 </div>
             </div>
 

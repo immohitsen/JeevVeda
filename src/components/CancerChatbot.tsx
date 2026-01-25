@@ -310,7 +310,7 @@ export default function CancerChatbot() {
             <button
               onClick={() => setActiveTab('chat')}
               className={cn(
-                "flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 border-b-2",
+                "cursor-pointer flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 border-b-2",
                 activeTab === 'chat'
                   ? "border-emerald-600 text-emerald-700 bg-emerald-50/50"
                   : "border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50"
@@ -322,7 +322,7 @@ export default function CancerChatbot() {
             <button
               onClick={() => setActiveTab('results')}
               className={cn(
-                "flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 border-b-2",
+                "cursor-pointer flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 border-b-2",
                 activeTab === 'results'
                   ? "border-emerald-600 text-emerald-700 bg-emerald-50/50"
                   : "border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50"
@@ -344,7 +344,7 @@ export default function CancerChatbot() {
               <div
                 key={index}
                 className={cn(
-                  "flex gap-4 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300",
+                  "flex gap-4 max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300",
                   message.role === 'user' ? 'justify-end' : 'justify-start'
                 )}
               >
@@ -357,7 +357,7 @@ export default function CancerChatbot() {
                 <div className={cn(
                   "max-w-[85%] sm:max-w-[75%] rounded-2xl px-5 py-3.5 shadow-sm text-sm sm:text-base leading-relaxed",
                   message.role === 'user'
-                    ? 'bg-emerald-600 text-white rounded-tr-sm'
+                    ? 'bg-emerald-600 text-white rounded-tr-sm max-w-5xl'
                     : 'bg-white border border-gray-100 text-gray-700 rounded-tl-sm'
                 )}>
                   <p className="whitespace-pre-wrap">{message.content}</p>
