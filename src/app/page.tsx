@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+
 import { StartButton } from "@/components/ui/start-button";
-import { LearnMoreButton } from "@/components/ui/learn-more-button";
+
 
 export default function Home() {
   return (
@@ -30,7 +30,7 @@ export default function Home() {
 
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-0 mx-4 md:mx-24 border-[0.5px] border-gray-200">
-      {Array.from({ length: 12 }).map((_, i) => (
+        {Array.from({ length: 12 }).map((_, i) => (
           <div key={i} className="hidden md:block border-[0.5px] border-gray-200 h-14"></div>
         ))}
         {/* Empty placeholders hidden on mobile */}

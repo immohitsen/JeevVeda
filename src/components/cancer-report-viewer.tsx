@@ -1,4 +1,4 @@
-import React from "react";
+
 import { UserHealthData } from "@/lib/types";
 import { RiskAssessment } from "@/types/cancer-report";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

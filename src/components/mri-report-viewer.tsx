@@ -1,11 +1,10 @@
-import React from "react";
+import { useMemo } from "react";
 import { MRIReportData } from "@/types/mri-report";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, AlertTriangle, FileText, Brain, Activity, User, Calendar, Stethoscope, ClipboardX, Info, ArrowLeft } from "lucide-react";
+import { AlertTriangle, FileText, Brain, User, Calendar, ArrowLeft } from "lucide-react";
 import Image from "next/image";
 
 interface MRIReportViewerProps {
@@ -27,8 +26,8 @@ const formatDate = (dateString?: string) => {
 
 export function MRIReportViewer({ report: rawReport, patient, onBack }: MRIReportViewerProps) {
   // Normalize the report data to handle FastAPI response format and inject patient data
-  const report = React.useMemo(() => {
-    let data = { ...rawReport };
+  const report = useMemo(() => {
+    const data = { ...rawReport };
 
     // Inject patient data if provided via props
     if (patient) {
@@ -66,34 +65,9 @@ export function MRIReportViewer({ report: rawReport, patient, onBack }: MRIRepor
   }, [rawReport, patient]);
 
   // Determine classification status based on prediction
-  const classification = React.useMemo(() => {
-    const pred = report.prediction?.toLowerCase() || "";
-    // If explicit prediction string
-    if (pred.includes("no_tumor") || pred.includes("normal")) {
-      return { label: "Non-Cancerous (Normal)", isCancer: false };
-    }
-    if (pred.includes("tumor") || pred.includes("cancer") || (report.aiAnalysis?.riskLevel as string) === "High") {
-      return { label: "Cancer Detected", isCancer: true };
-    }
-    // Fallback based on risk level
-    if (report.aiAnalysis?.riskLevel === "Low") return { label: "Non-Cancerous (Low Risk)", isCancer: false };
-    if ((report.aiAnalysis?.riskLevel as string) === "High") return { label: "Cancer Detected (High Risk)", isCancer: true };
 
-    return { label: "Analysis Inconclusive", isCancer: false };
-  }, [report]);
 
-  const getRiskColor = (level: string) => {
-    switch (level) { // ... existing code
-      case "High":
-        return "bg-red-500/10 text-red-500 hover:bg-red-500/20";
-      case "Medium":
-        return "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20";
-      case "Low":
-        return "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20";
-      default:
-        return "bg-gray-500/10 text-gray-500";
-    }
-  };
+
 
   return (
     <div className="flex flex-col h-full overflow-hidden">

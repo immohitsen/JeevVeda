@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
-import { ChatRequestSchema, ExtractedDataSchema, validatePartialHealthData, getMissingFields } from "@/lib/types";
+import { ChatRequestSchema, getMissingFields } from "@/lib/types";
 import { connect } from '@/dbConfig/dbConfig';
 import Report from '@/models/reportModel';
 import jwt from 'jsonwebtoken';
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     const { history, userResponses } = validatedRequest;
 
     // Use passed userResponses, or empty object if first time
-    let currentData = { ...userResponses };
+    const currentData = { ...userResponses };
     const lastUserMessage = history.length > 0 && history[history.length - 1].role === 'user'
       ? history[history.length - 1].content
       : null;
@@ -159,11 +159,15 @@ Generate a professional, structured health assessment report.
 
     return NextResponse.json(finalResponse);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // ... existing error handling ...
     // Extract specific API error message if available (e.g. for 429 Quota Exceeded)
     // Structure: { error: { code, message, status } }
-    let errorMessage = error?.error?.message || error?.message || "I'm having a little trouble connecting to my brain right now.";
+
+    // Type assertion for error handling
+    const err = error as { error?: { message?: string }, message?: string };
+
+    let errorMessage = err?.error?.message || err?.message || "I'm having a little trouble connecting to my brain right now.";
 
     // Attempt to extract cleaner message if the error message is stringified JSON
     try {
@@ -173,7 +177,7 @@ Generate a professional, structured health assessment report.
           errorMessage = parsed.error.message;
         }
       }
-    } catch (e) {
+    } catch {
       // Failed to parse, stick with the original message
     }
 
@@ -185,28 +189,4 @@ Generate a professional, structured health assessment report.
       isComplete: false
     });
   }
-}
-
-/**
- * Normalize user inputs for consistency
- */
-function normalizeHealthData(data: Record<string, string>) {
-  const normalized: Record<string, string> = {};
-
-  if (data.height_weight) {
-    normalized.height_weight = data.height_weight
-      .replace(/feet|ft/gi, "'")
-      .replace(/inches|inch|in/gi, '"')
-      .replace(/kgs?|kilograms?/gi, 'kg')
-      .replace(/lbs?|pounds?/gi, 'lb');
-  }
-
-  if (data.smoking_status) {
-    const msg = data.smoking_status.toLowerCase();
-    if (msg.includes("never")) normalized.smoking_status = "non-smoker";
-    else if (msg.includes("quit") || msg.includes("former")) normalized.smoking_status = "former smoker";
-    else if (msg.includes("yes") || msg.includes("current")) normalized.smoking_status = "current smoker";
-  }
-
-  return { ...data, ...normalized };
 }

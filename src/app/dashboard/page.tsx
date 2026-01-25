@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { useUser } from "@/hooks/useUser"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/professional-button"
@@ -12,15 +12,10 @@ import {
   FileText,
   Heart,
   Shield,
-  AlertTriangle,
-  CheckCircle,
-  ArrowRight,
-  Zap,
-  Target,
   Sparkles,
   ChevronRight,
-  Menu,
-  Clock
+  Clock,
+  ArrowRight
 } from "lucide-react"
 import { motion, AnimatePresence, type Variants } from "motion/react"
 import { cn } from "@/lib/utils"
@@ -404,7 +399,7 @@ export default function Dashboard() {
               { title: "Screening Tools", icon: Scan, color: "blue", url: "/dashboard/screening-tools", desc: "Early detection" },
               { title: "AI Assistant", icon: MessageSquare, color: "emerald", url: "/dashboard/chatbot", desc: "Get answers" },
               { title: "Sample Report", icon: FileText, color: "violet", url: "/dashboard/report/mock", desc: "View MRI Demo" }
-            ].map((action, i) => (
+            ].map((action) => (
               <motion.button
                 key={action.title}
                 variants={itemVariants}

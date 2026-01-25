@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Upload, Brain, AlertTriangle, CheckCircle, ArrowLeft, FileImage, X, Loader2, Download, Eye, ChevronRight, Shield } from "lucide-react"
+import { Upload, Brain, AlertTriangle, CheckCircle, ArrowLeft, FileImage, X, Loader2, Eye, Shield } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"

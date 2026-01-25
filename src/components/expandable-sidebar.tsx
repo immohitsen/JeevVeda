@@ -1,7 +1,7 @@
 "use client"
 
-import { Home, MessageCircle, ActivitySquare, History, Shield, Scan, UserCircle, Clock, ChevronLeft } from "lucide-react"
-import { useRouter, usePathname } from "next/navigation"
+import { Home, MessageCircle, ActivitySquare, History, Scan, UserCircle, ChevronLeft } from "lucide-react"
+import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import {
@@ -31,14 +31,9 @@ interface ExpandableSidebarProps {
 }
 
 export function ExpandableSidebar({ onClose, onNavigate }: ExpandableSidebarProps) {
-  const router = useRouter()
   const pathname = usePathname()
   const [open, setOpen] = useState(true)
 
-  const handleNavigation = (url: string) => {
-    router.push(url)
-    if (onClose) onClose()
-  }
 
   const isActive = (path: string) => {
     return pathname === path

@@ -1,7 +1,7 @@
 // src/app/dashboard/blood-analyzer/page.tsx
 "use client";
 
-import React, { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import {
   FileImage,
   FileText,
@@ -10,10 +10,8 @@ import {
   CheckCircle,
   Download,
   AlertTriangle,
-  TrendingUp,
   Activity,
   Loader2,
-  FileDigit,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -201,19 +199,7 @@ export default function BloodAnalyzerPage() {
     }
   };
 
-  const getStatusIcon = (status: TestStatus | string) => {
-    switch (status) {
-      case "normal":
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case "high":
-      case "low":
-        return <TrendingUp className="w-4 h-4 text-orange-600" />;
-      case "critical":
-        return <AlertTriangle className="w-4 h-4 text-red-600" />;
-      default:
-        return <Activity className="w-4 h-4 text-gray-600" />;
-    }
-  };
+
 
   const getRiskColor = (risk: OverallCancerRisk | RiskLevel | string) => {
     switch (risk) {

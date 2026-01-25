@@ -1,10 +1,12 @@
 // src/app/api/blood-analyzer/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Part } from '@google/genai';
 import { connect } from '@/dbConfig/dbConfig';
 import Report from '@/models/reportModel';
 import jwt from 'jsonwebtoken';
+// @ts-expect-error pdf-parse does not have type definitions in this environment
+import PDFParse from 'pdf-parse';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,8 +20,48 @@ const ai = new GoogleGenAI({
 // Connect to database
 connect();
 
-// Import PDFParse from pdf-parse using require
-const { PDFParse } = require('pdf-parse');
+interface AnalysisResult {
+  patientInfo?: {
+    name?: string | null;
+    age?: number | null;
+    gender?: string | null;
+    reportDate?: string | null;
+  };
+  testResults?: Array<{
+    category: string;
+    tests: Array<{
+      testName: string;
+      value: string | number;
+      unit: string;
+      referenceRange: string;
+      status: string;
+    }>;
+  }>;
+  cancerRiskAssessment?: {
+    overallRisk: string;
+    riskFactors: Array<{
+      factor: string;
+      value: string;
+      significance: string;
+      riskLevel: string;
+    }>;
+    cancerTypes: Array<{
+      type: string;
+      riskLevel: string;
+      indicators: string[];
+    }>;
+    recommendations: string[];
+  };
+  otherHealthRisks?: Array<{
+    condition: string;
+    risk: string;
+    indicators: string[];
+    description: string;
+  }>;
+  insights?: string[];
+  overallAssessment?: string;
+  error?: string;
+}
 
 // --- Build prompt for Gemini 3.0 Flash ---
 function buildPrompt(isTextMode: boolean) {
@@ -100,15 +142,8 @@ function buildPrompt(isTextMode: boolean) {
 // --- Async PDF Parser Function using PDFParse class ---
 async function parsePDFBuffer(buffer: Buffer): Promise<string> {
   try {
-    // Create PDFParse instance with buffer data
-    const parser = new PDFParse({ data: buffer });
-    
     // Extract text
-    const result = await parser.getText();
-    
-    // Cleanup
-    await parser.destroy();
-    
+    const result = await PDFParse(buffer);
     return result.text;
   } catch (error) {
     console.error('PDF parsing error:', error);
@@ -148,38 +183,38 @@ export async function POST(req: NextRequest) {
     console.log(`Processing file: ${file.name}, Type: ${file.type}, Size: ${file.size} bytes`);
 
     const fileBuffer = Buffer.from(await file.arrayBuffer());
-    
-    let contentParts: any[] = [];
+
+    let contentParts: Part[] = [];
     let isTextMode = false;
 
     // ===== PDF Processing =====
     if (file.type === 'application/pdf') {
       try {
         console.log("🔄 Parsing PDF with PDFParse...");
-        
-        // Use PDFParse class to extract text
+
+        // Use PDFParse function to extract text
         const extractedText = await parsePDFBuffer(fileBuffer);
-        
+
         if (!extractedText || extractedText.trim().length < 50) {
           console.warn("PDF text too short or empty. Likely a scanned document. Falling back to vision analysis.");
           throw new Error("SCANNED_PDF_FALLBACK");
         }
-        
+
         isTextMode = true;
         contentParts = [
           { text: buildPrompt(true) },
           { text: `\n\nExtracted Blood Report Text:\n${extractedText}` }
         ];
-        
+
         console.log("PDF Text Extracted successfully, length:", extractedText.length);
-        
-      } catch (err: any) {
-        console.log("Switching to PDF-as-Document analysis (Fallback mode)");
-        
+
+      } catch (err: unknown) {
+        console.log("Switching to PDF-as-Document analysis (Fallback mode)", err);
+
         // Fallback: Send the PDF as base64 data (Gemini can read PDFs directly)
         const base64Data = fileBuffer.toString('base64');
         isTextMode = false;
-        
+
         contentParts = [
           { text: buildPrompt(false) },
           {
@@ -189,15 +224,15 @@ export async function POST(req: NextRequest) {
             },
           }
         ];
-        
+
         console.log("✅ PDF prepared for vision analysis");
       }
-    } 
+    }
     // ===== Image Processing =====
     else {
       const base64Data = fileBuffer.toString('base64');
       isTextMode = false;
-      
+
       contentParts = [
         { text: buildPrompt(false) },
         {
@@ -207,7 +242,7 @@ export async function POST(req: NextRequest) {
           },
         }
       ];
-      
+
       console.log("✅ Image processed, ready for analysis");
     }
 
@@ -215,7 +250,7 @@ export async function POST(req: NextRequest) {
     console.log("🔄 Calling Gemini 3.0 Flash API...");
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview', // ✅ Using Gemini 3.0 Flash
+      model: 'gemini-2.0-flash-exp', // ✅ Using Gemini 2.0 Flash as per documentation recommendation
       contents: contentParts,
       config: {
         temperature: 0.1,
@@ -232,12 +267,12 @@ export async function POST(req: NextRequest) {
 
     console.log('✅ AI Response received (Gemini 3.0 Flash):', responseText.substring(0, 200) + '...');
 
-    let analysisResult: Record<string, unknown>;
+    let analysisResult: AnalysisResult;
 
     // ===== Parse JSON Response =====
     try {
       let jsonText = responseText.trim();
-      
+
       // Cleanup markdown formatting if present
       if (jsonText.startsWith('```json')) {
         jsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
@@ -247,11 +282,11 @@ export async function POST(req: NextRequest) {
 
       analysisResult = JSON.parse(jsonText);
       console.log('✅ JSON parsed successfully');
-      
+
     } catch (parseError) {
       console.error('❌ JSON parse error:', parseError);
       console.error('Raw response:', responseText);
-      
+
       // Return structured error
       analysisResult = {
         patientInfo: { name: null },
@@ -263,10 +298,10 @@ export async function POST(req: NextRequest) {
     }
 
     // ===== Validate Results =====
-    const hasResults = Array.isArray((analysisResult as any).testResults) 
-                       && (analysisResult as any).testResults.length > 0;
-    
-    if (!hasResults && !(analysisResult as any).error) {
+    const hasResults = Array.isArray(analysisResult.testResults)
+      && analysisResult.testResults.length > 0;
+
+    if (!hasResults && !analysisResult.error) {
       return NextResponse.json(
         { error: 'No test data could be extracted. Ensure the image/PDF is a clear blood report with readable text.' },
         { status: 400 }
@@ -277,7 +312,7 @@ export async function POST(req: NextRequest) {
     let reportId: string | null = null;
     try {
       const token = req.cookies.get('token')?.value;
-      
+
       if (token) {
         const decoded = jwt.verify(token, process.env.TOKEN_SECRET!) as { id: string };
         const userId = decoded.id;
@@ -287,7 +322,7 @@ export async function POST(req: NextRequest) {
           reportType: 'BLOOD_ANALYSIS',
           fileName: file.name,
           fileSize: file.size,
-          reportData: analysisResult,
+          reportData: analysisResult as Record<string, unknown>,
         });
 
         await report.save();
@@ -314,17 +349,19 @@ export async function POST(req: NextRequest) {
         model: 'gemini-3-flash-preview',
         processingMode: isTextMode ? 'text-extraction' : 'vision-analysis',
         sdkVersion: '@google/genai',
-        pdfParser: 'pdf-parse@2.x (PDFParse class)'
+        pdfParser: 'pdf-parse'
       },
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Blood analyzer error:', error);
-    
+
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
     // Handle specific API errors
-    if (error.message?.includes('API key')) {
+    if (errorMessage.includes('API key')) {
       return NextResponse.json(
-        { 
+        {
           error: 'Invalid or missing API key',
           details: 'Please check your GEMINI_API_KEY environment variable',
           timestamp: new Date().toISOString()
@@ -333,9 +370,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (error.message?.includes('quota') || error.message?.includes('rate limit')) {
+    if (errorMessage.includes('quota') || errorMessage.includes('rate limit')) {
       return NextResponse.json(
-        { 
+        {
           error: 'API quota exceeded',
           details: 'Rate limit reached. Please try again later.',
           timestamp: new Date().toISOString()
@@ -343,11 +380,11 @@ export async function POST(req: NextRequest) {
         { status: 429 }
       );
     }
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error during analysis',
-        details: error.message || 'Unknown error',
+        details: errorMessage,
         timestamp: new Date().toISOString()
       },
       { status: 500 }

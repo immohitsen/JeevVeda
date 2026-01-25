@@ -1,17 +1,27 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { MRIReportViewer } from "@/components/mri-report-viewer";
 import { BloodReportViewer } from "@/components/blood-report-viewer";
 import { CancerReportViewer } from "@/components/cancer-report-viewer";
 import { MRIReportData } from "@/types/mri-report";
 import { BloodReportData } from "@/types/blood-report";
+import { RiskAssessment } from "@/types/cancer-report";
 import { useUser } from "@/hooks/useUser";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, AlertTriangle } from "lucide-react";
 
-type AnyReportData = MRIReportData | BloodReportData | Record<string, any>;
+interface CancerReportData {
+  reportType: 'RISK_ASSESSMENT';
+  collectedData?: Record<string, unknown>;
+  user_health_data?: Record<string, unknown>;
+  assessment?: string;
+  assessment_report?: string;
+  risk_assessment?: RiskAssessment;
+}
+
+type AnyReportData = MRIReportData | BloodReportData | CancerReportData | Record<string, unknown>;
 
 export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { user, loading: userLoading } = useUser();
@@ -120,7 +130,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     return data.reportType === 'BLOOD_ANALYSIS';
   }
 
-  const isCancerReport = (data: AnyReportData): boolean => {
+  const isCancerReport = (data: AnyReportData): data is CancerReportData => {
     return data.reportType === 'RISK_ASSESSMENT';
   }
 
@@ -147,9 +157,9 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
             </Button>
           </div>
           <CancerReportViewer
-            data={(reportData as any).collectedData || (reportData as any).user_health_data || {}}
-            reportText={(reportData as any).assessment || (reportData as any).assessment_report || ""}
-            riskAssessment={(reportData as any).risk_assessment}
+            data={(reportData as CancerReportData).collectedData || (reportData as CancerReportData).user_health_data || {}}
+            reportText={(reportData as CancerReportData).assessment || (reportData as CancerReportData).assessment_report || ""}
+            riskAssessment={(reportData as CancerReportData).risk_assessment}
           />
         </div>
       ) : (

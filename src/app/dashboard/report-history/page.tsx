@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { History, FileText, Download, Eye, Activity, Scan, Shield, Loader2, Search, Filter, ArrowUpRight, ArrowRight, ChevronLeft, ChevronRight, SlidersHorizontal, ArrowUpDown, MoreVertical, Trash2 } from "lucide-react"
+import { FileText, Eye, Activity, Scan, Shield, Loader2, Search, Filter, ChevronLeft, ChevronRight, ArrowUpDown, MoreVertical, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
@@ -19,7 +19,7 @@ interface Report {
 
 export default function ReportHistoryPage() {
   const router = useRouter()
-  const [selectedFilter, setSelectedFilter] = useState<string>('ALL')
+  const [selectedFilter] = useState<string>('ALL')
   const [searchQuery, setSearchQuery] = useState('')
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(true)
@@ -91,15 +91,7 @@ export default function ReportHistoryPage() {
     fetchReports()
   }, [pagination.currentPage, selectedFilter])
 
-  // Get icon for report type
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'BLOOD_ANALYSIS': return Activity
-      case 'MRI_SCAN': return Scan
-      case 'RISK_ASSESSMENT': return Shield
-      default: return FileText
-    }
-  }
+
 
   // Get type display name
   const getTypeName = (type: string) => {
@@ -121,15 +113,7 @@ export default function ReportHistoryPage() {
     }
   }
 
-  // New Status Dot Color
-  const getStatusColor = (type: string) => {
-    switch (type) {
-      case 'BLOOD_ANALYSIS': return 'bg-rose-500'
-      case 'MRI_SCAN': return 'bg-blue-500'
-      case 'RISK_ASSESSMENT': return 'bg-emerald-500'
-      default: return 'bg-slate-500'
-    }
-  }
+
 
   // Filter reports by search query
   const filteredReports = reports.filter(report => {

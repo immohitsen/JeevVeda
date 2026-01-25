@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { UserHealthData, ChatResponse } from '@/lib/types';
 import { CancerReportViewer } from './cancer-report-viewer';
 import { RiskAssessment } from '@/types/cancer-report';
-import { Send, Bot, User, AlertTriangle, CheckCircle, Activity, Info, ChevronRight, BarChart2, MessageSquare, Loader2 } from 'lucide-react';
+import { Send, Bot, User, BarChart2, MessageSquare, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 // --- TYPE DEFINITIONS ---

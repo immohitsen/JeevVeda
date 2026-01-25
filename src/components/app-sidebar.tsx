@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, MessageCircle, ActivitySquare, History, Shield, Scan, ClipboardList, UserCircle, Clock } from "lucide-react"
+import { Home, MessageCircle, ActivitySquare, History, Shield, Scan, ClipboardList } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 
 // Medical navigation items matching the image

@@ -40,10 +40,14 @@ export async function GET(
       );
     }
 
+    // Use type assertion for basic property access since lean() returns POJO
+    const reportData = report as Record<string, unknown>;
+    const reportContent = reportData.reportData as Record<string, unknown> | undefined;
+
     console.log(`[API] Fetched report ${id}:`, {
-      type: (report as any).reportType,
-      hasData: !!(report as any).reportData,
-      keys: (report as any).reportData ? Object.keys((report as any).reportData) : []
+      type: reportData.reportType,
+      hasData: !!reportContent,
+      keys: reportContent ? Object.keys(reportContent) : []
     });
 
     return NextResponse.json({

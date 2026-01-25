@@ -1,11 +1,10 @@
 "use client"
 
 import { useEffect } from 'react'
-import { X, Home, MessageCircle, Scan, ActivitySquare, History, UserCircle, ChevronLeft } from 'lucide-react'
+import { X, Home, MessageCircle, Scan, ActivitySquare, History, UserCircle } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'motion/react'
-import Link from 'next/link'
 
 // Medical navigation items - Synced with ExpandableSidebar
 const navigationItems = [
