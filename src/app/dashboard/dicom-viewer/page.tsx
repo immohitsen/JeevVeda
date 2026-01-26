@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import React, { useState, useEffect, useRef, useCallback } from "react"
 import { Upload, FileImage, X, ArrowLeft, ZoomIn, ZoomOut, Move, ChevronLeft, ChevronRight, Play, Pause, Ruler, Sun, Moon, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
@@ -24,7 +24,7 @@ export default function DicomViewerPage() {
   const [brightness, setBrightness] = useState(0)
   const [contrast, setContrast] = useState(1)
   const [activeTool, setActiveTool] = useState<'none' | 'measure' | 'angle' | 'pan'>('none')
-  const [_measurements, setMeasurements] = useState<{x: number; y: number}[]>([])
+  const [_measurements, setMeasurements] = useState<{ x: number; y: number }[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -48,8 +48,8 @@ export default function DicomViewerPage() {
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const files = Array.from(e.dataTransfer.files)
-      const dicomFiles = files.filter(file => 
-        file.name.toLowerCase().includes('.dcm') || 
+      const dicomFiles = files.filter(file =>
+        file.name.toLowerCase().includes('.dcm') ||
         file.type.includes('dicom') ||
         file.name.toLowerCase().includes('dicom')
       )
@@ -80,7 +80,7 @@ export default function DicomViewerPage() {
     setIsLoading(true)
     setError(null)
     setIsPlaying(false)
-    
+
     try {
       const imageData = await DicomParser.parseFile(file)
       if (imageData) {
@@ -112,37 +112,37 @@ export default function DicomViewerPage() {
 
   const renderDicomFrame = useCallback(() => {
     if (!dicomData || !canvasRef.current || currentFrame >= dicomData.numberOfFrames) return
-    
+
     try {
       console.log('Rendering frame:', currentFrame + 1, 'of', dicomData.numberOfFrames)
-      
+
       // Create a temporary canvas with custom window/level settings
       const tempCanvas = document.createElement('canvas')
       const tempCtx = tempCanvas.getContext('2d')
       if (!tempCtx) return
-      
+
       tempCanvas.width = dicomData.width
       tempCanvas.height = dicomData.height
-      
+
       // Get frame data
       const frame = dicomData.frames[currentFrame]
       const pixelData = frame.pixelData
-      
+
       // Create image data with custom windowing
       const imageData = tempCtx.createImageData(dicomData.width, dicomData.height)
       const data = imageData.data
-      
+
       // Use custom window/level values if set
       const wc = windowCenter !== null ? windowCenter : (dicomData.windowCenter || 128)
       const ww = windowWidth !== null ? windowWidth : (dicomData.windowWidth || 256)
-      
+
       if (pixelData instanceof Uint16Array) {
         const windowMin = wc - ww / 2
         const windowMax = wc + ww / 2
-        
+
         for (let i = 0; i < pixelData.length && i < dicomData.width * dicomData.height; i++) {
           let pixelValue = pixelData[i]
-          
+
           // Apply windowing
           if (pixelValue <= windowMin) {
             pixelValue = 0
@@ -151,10 +151,10 @@ export default function DicomViewerPage() {
           } else {
             pixelValue = Math.round(((pixelValue - windowMin) / ww) * 255)
           }
-          
+
           // Apply brightness and contrast
           pixelValue = Math.max(0, Math.min(255, pixelValue * contrast + brightness))
-          
+
           const canvasIndex = i * 4
           data[canvasIndex] = pixelValue     // Red
           data[canvasIndex + 1] = pixelValue // Green
@@ -166,7 +166,7 @@ export default function DicomViewerPage() {
           let pixelValue = pixelData[i]
           // Apply brightness and contrast
           pixelValue = Math.max(0, Math.min(255, pixelValue * contrast + brightness))
-          
+
           const canvasIndex = i * 4
           data[canvasIndex] = pixelValue     // Red
           data[canvasIndex + 1] = pixelValue // Green
@@ -174,16 +174,16 @@ export default function DicomViewerPage() {
           data[canvasIndex + 3] = 255        // Alpha
         }
       }
-      
+
       tempCtx.putImageData(imageData, 0, 0)
-      
+
       // Draw to main canvas
       const ctx = canvasRef.current.getContext('2d')
       if (ctx) {
         // Set canvas dimensions to match image dimensions
         canvasRef.current.width = dicomData.width
         canvasRef.current.height = dicomData.height
-        
+
         // Disable image smoothing for sharper medical images
         ctx.imageSmoothingEnabled = false
         ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
@@ -194,7 +194,7 @@ export default function DicomViewerPage() {
       setError(`Failed to render frame ${currentFrame + 1}: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }, [dicomData, currentFrame, windowCenter, windowWidth, brightness, contrast])
-  
+
   const nextFrame = useCallback(() => {
     if (dicomData && currentFrame < dicomData.numberOfFrames - 1) {
       const newFrame = currentFrame + 1
@@ -202,7 +202,7 @@ export default function DicomViewerPage() {
       setCurrentFrame(newFrame)
     }
   }, [dicomData, currentFrame])
-  
+
   const prevFrame = useCallback(() => {
     if (currentFrame > 0) {
       const newFrame = currentFrame - 1
@@ -210,18 +210,18 @@ export default function DicomViewerPage() {
       setCurrentFrame(newFrame)
     }
   }, [currentFrame])
-  
+
   const goToFrame = (frameIndex: number) => {
     if (dicomData && frameIndex >= 0 && frameIndex < dicomData.numberOfFrames) {
       console.log('Go to frame:', frameIndex)
       setCurrentFrame(frameIndex)
     }
   }
-  
+
   const togglePlayback = useCallback(() => {
     setIsPlaying(!isPlaying)
   }, [isPlaying])
-  
+
   const resetView = useCallback(() => {
     // Set a slight upward offset to position the image higher
     setPan({ x: 0, y: 40 })
@@ -236,21 +236,21 @@ export default function DicomViewerPage() {
       // Calculate available space accounting for padding and potential overlays
       const availableWidth = containerRect.width - 80
       const availableHeight = containerRect.height - 80
-      
+
       const fit = DicomParser.fitImageToContainer(
         dicomData.width,
         dicomData.height,
         availableWidth,
         availableHeight
       )
-      
+
       // Apply the calculated scale to ensure image fits properly
       setZoom(fit.scale * 0.95) // Slightly smaller to ensure full visibility
     } else {
       setZoom(1)
     }
   }, [dicomData])
-  
+
   // Window/Level presets for different scan types
   const windowPresets = {
     'Soft Tissue': { center: 50, width: 400 },
@@ -260,20 +260,20 @@ export default function DicomViewerPage() {
     'Liver': { center: 30, width: 150 },
     'Default': { center: 517, width: 1102 }
   }
-  
+
   const applyWindowPreset = (preset: keyof typeof windowPresets) => {
     const { center, width } = windowPresets[preset]
     setWindowCenter(center)
     setWindowWidth(width)
   }
-  
+
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (activeTool === 'pan') {
       setIsDragging(true)
       setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y })
     }
   }
-  
+
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isDragging && activeTool === 'pan') {
       setPan({
@@ -282,7 +282,7 @@ export default function DicomViewerPage() {
       })
     }
   }
-  
+
   const handleMouseUp = () => {
     setIsDragging(false)
   }
@@ -302,26 +302,26 @@ export default function DicomViewerPage() {
         playbackRef.current = null
       }
     }
-    
+
     return () => {
       if (playbackRef.current) {
         clearInterval(playbackRef.current)
       }
     }
   }, [isPlaying, dicomData, playbackSpeed])
-  
+
   // Render frame when data or frame changes
   useEffect(() => {
     if (dicomData) {
       renderDicomFrame()
     }
   }, [dicomData, currentFrame, windowCenter, windowWidth, brightness, contrast, renderDicomFrame])
-  
+
   // Keyboard and mouse wheel navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!dicomData) return
-      
+
       switch (e.key) {
         case 'ArrowLeft':
           e.preventDefault()
@@ -342,18 +342,18 @@ export default function DicomViewerPage() {
           break
       }
     }
-    
+
     const handleWheel = (e: WheelEvent) => {
       if (!dicomData || dicomData.numberOfFrames <= 1) return
-      
+
       // Only handle wheel events if the target is within the DICOM viewer area
       const target = e.target as HTMLElement
       const canvas = canvasRef.current
       const container = containerRef.current
-      
+
       if (canvas && container && (canvas.contains(target) || container.contains(target))) {
         e.preventDefault()
-        
+
         if (e.deltaY > 0) {
           // Scroll down - next frame
           nextFrame()
@@ -363,30 +363,30 @@ export default function DicomViewerPage() {
         }
       }
     }
-    
+
     window.addEventListener('keydown', handleKeyDown)
     document.addEventListener('wheel', handleWheel, { passive: false })
-    
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
       document.removeEventListener('wheel', handleWheel)
     }
   }, [dicomData, currentFrame, isPlaying, nextFrame, prevFrame, togglePlayback, resetView])
-  
+
   // Auto-fit image when loaded or when container size changes
   useEffect(() => {
     if (dicomData && containerRef.current) {
       // Small delay to ensure container is fully rendered
       setTimeout(() => resetView(), 100)
-      
+
       // Add resize listener to handle window/container size changes
       const handleResize = () => {
         if (containerRef.current) resetView()
       }
-      
+
       // Initial fit might need a second attempt for better accuracy
       setTimeout(() => resetView(), 500)
-      
+
       window.addEventListener('resize', handleResize)
       return () => {
         window.removeEventListener('resize', handleResize)
@@ -395,7 +395,7 @@ export default function DicomViewerPage() {
   }, [dicomData, resetView])
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+    <div className="fixed inset-0 bg-black z-50 flex flex-col overflow-hidden">
       {/* Compact Header */}
       <div className="bg-gray-900 text-white px-4 py-2 flex items-center justify-between border-b border-gray-700">
         <div className="flex items-center gap-3">
@@ -411,13 +411,9 @@ export default function DicomViewerPage() {
             <FileImage className="w-5 h-5" />
             <h1 className="text-lg font-bold">DICOM Viewer</h1>
           </div>
-          <div className="bg-red-600 px-2 py-1 rounded text-xs font-medium">
-            NOT FOR MEDICAL USE
-          </div>
         </div>
-        
+
         <div className="flex items-center gap-3 text-xs">
-          <div className="text-gray-400">Educational/Reference Only</div>
           <div className="text-gray-300">{uploadedFiles.length} files</div>
         </div>
       </div>
@@ -427,14 +423,13 @@ export default function DicomViewerPage() {
         <div className="w-64 bg-gray-900 border-r border-gray-700 flex flex-col">
           <div className="p-4">
             <h3 className="text-white font-medium mb-4">Files</h3>
-            
+
             {/* Upload Area */}
             <div
-              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                dragActive
-                  ? "border-blue-500 bg-blue-500/10"
-                  : "border-gray-600 hover:border-gray-500"
-              }`}
+              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${dragActive
+                ? "border-blue-500 bg-blue-500/10"
+                : "border-gray-600 hover:border-gray-500"
+                }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
@@ -471,11 +466,10 @@ export default function DicomViewerPage() {
             {uploadedFiles.map((file, index) => (
               <div
                 key={index}
-                className={`flex items-center justify-between p-3 rounded-lg mb-2 cursor-pointer transition-colors ${
-                  selectedFile === file
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-800 hover:bg-gray-700 text-gray-200"
-                }`}
+                className={`flex items-center justify-between p-3 rounded-lg mb-2 cursor-pointer transition-colors ${selectedFile === file
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-800 hover:bg-gray-700 text-gray-200"
+                  }`}
                 onClick={() => handleFileSelect(file)}
               >
                 <div className="flex-1 min-w-0">
@@ -515,14 +509,14 @@ export default function DicomViewerPage() {
                 <p className="text-sm">{error}</p>
               </div>
             ) : dicomData ? (
-                             <div 
-                 className="relative flex items-start justify-center w-full h-full"
-                 style={{
-                   overflow: 'hidden',
-                   padding: '20px',
-                   paddingTop: '60px',
-                   paddingBottom: '60px'
-                 }}
+              <div
+                className="relative flex items-start justify-center w-full h-full"
+                style={{
+                  overflow: 'hidden',
+                  padding: '20px',
+                  paddingTop: '60px',
+                  paddingBottom: '60px'
+                }}
               >
                 <div
                   style={{
@@ -531,18 +525,17 @@ export default function DicomViewerPage() {
                     display: 'flex',
                     alignItems: 'flex-start',
                     justifyContent: 'center',
-                    width: '60%',
-                    height: '60%',
-                    marginTop: '-40px'
+                    width: '100%',
+                    height: '100%',
+                    marginTop: '-80px'
                   }}
                 >
-                  <canvas 
+                  <canvas
                     ref={canvasRef}
-                    className={`shadow-lg ${
-                      activeTool === 'pan' ? 'cursor-move' : 
-                      activeTool === 'measure' ? 'cursor-crosshair' : 
-                      'cursor-default'
-                    }`}
+                    className={`shadow-lg ${activeTool === 'pan' ? 'cursor-move' :
+                      activeTool === 'measure' ? 'cursor-crosshair' :
+                        'cursor-default'
+                      }`}
                     style={{
                       imageRendering: 'pixelated',
                       maxWidth: '100%',
@@ -570,10 +563,10 @@ export default function DicomViewerPage() {
                 <p className="text-sm">Upload and select a DICOM file to view</p>
               </div>
             )}
-            
-                         {/* Frame Navigation Overlay */}
-             {dicomData && dicomData.numberOfFrames > 1 && (
-               <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 px-4 py-2 rounded-lg flex items-center gap-3 z-10">
+
+            {/* Frame Navigation Overlay */}
+            {dicomData && dicomData.numberOfFrames > 1 && (
+              <div className="absolute top-1/2 mt-50 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 px-4 py-2 rounded-lg flex items-center gap-2 z-10 border border-gray-800">
                 <Button
                   variant="outline"
                   size="sm"
@@ -583,13 +576,13 @@ export default function DicomViewerPage() {
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                
+
                 <div className="flex items-center gap-2 px-2">
-                  <span className="text-white text-sm whitespace-nowrap">
+                  <span className="w-10 text-white text-sm whitespace-nowrap">
                     {currentFrame + 1} / {dicomData.numberOfFrames}
                   </span>
                 </div>
-                
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -598,7 +591,7 @@ export default function DicomViewerPage() {
                 >
                   {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -610,47 +603,47 @@ export default function DicomViewerPage() {
                 </Button>
               </div>
             )}
-            
-                         {/* Scroll Indicator */}
-             {dicomData && dicomData.numberOfFrames > 1 && (
-               <div className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-75 rounded-lg p-2 z-10">
+
+            {/* Scroll Indicator */}
+            {dicomData && dicomData.numberOfFrames > 1 && (
+              <div className="absolute right-1 top-1/3 mt-12 transform -translate-y-1/2 bg-black bg-opacity-75 rounded-lg p-2 z-10 flex flex-col items-center">
                 <div className="w-2 bg-gray-700 rounded-full" style={{ height: '200px' }}>
-                  <div 
+                  <div
                     className="w-full bg-blue-500 rounded-full transition-all duration-150"
-                    style={{ 
+                    style={{
                       height: `${(currentFrame + 1) / dicomData.numberOfFrames * 100}%`
                     }}
                   ></div>
                 </div>
-                <div className="text-white text-xs text-center mt-1">
+                <div className="text-white text-xs text-center mt-2 w-20">
                   {Math.round((currentFrame + 1) / dicomData.numberOfFrames * 100)}%
                 </div>
               </div>
             )}
           </div>
         </div>
-        
-                 {/* Right Sidebar - Settings & Controls */}
-         <div className="w-80 bg-gray-900 border-l border-gray-700 flex flex-col h-full overflow-hidden" style={{ maxHeight: '100vh' }}>
+
+        {/* Right Sidebar - Settings & Controls */}
+        <div className="w-80 bg-gray-900 border-l border-gray-700 flex flex-col h-full overflow-hidden" style={{ maxHeight: '81.5vh' }}>
           {selectedFile ? (
-            <div className="overflow-y-auto h-full" style={{ 
-                scrollbarWidth: 'thin', 
-                scrollbarColor: '#4B5563 #1F2937',
-                WebkitOverflowScrolling: 'touch'
-              }}>
+            <div className="overflow-y-auto h-full" style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#4B5563 #1F2937',
+              WebkitOverflowScrolling: 'touch'
+            }}>
               {/* File Info */}
               <div className="p-4 border-b border-gray-700">
                 <h3 className="text-white font-medium text-sm mb-2 truncate">{selectedFile.name}</h3>
                 {dicomData && (
                   <div className="text-gray-400 text-xs space-y-1">
-                    <div>{dicomData.width} × {dicomData.height} pixels</div>
+                    <div>{dicomData.width} x {dicomData.height} pixels</div>
                     {dicomData.numberOfFrames > 1 && <div>{dicomData.numberOfFrames} frames</div>}
                     {dicomData.patientName && <div>Patient: {dicomData.patientName}</div>}
                     {dicomData.studyDescription && <div>{dicomData.studyDescription}</div>}
                   </div>
                 )}
               </div>
-              
+
               {/* Frame Navigation */}
               {dicomData && dicomData.numberOfFrames > 1 && (
                 <div className="p-4 border-b border-gray-700">
@@ -685,7 +678,7 @@ export default function DicomViewerPage() {
                       <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs text-gray-400">
                       <span>Frame {currentFrame + 1} of {dicomData.numberOfFrames}</span>
@@ -702,7 +695,7 @@ export default function DicomViewerPage() {
                   </div>
                 </div>
               )}
-              
+
               {/* Tools Section */}
               <div className="p-4 border-b border-gray-700">
                 <h4 className="text-white font-medium text-sm mb-3">Tools</h4>
@@ -727,7 +720,7 @@ export default function DicomViewerPage() {
                   </Button>
                 </div>
               </div>
-              
+
               {/* Zoom Controls */}
               <div className="p-4 border-b border-gray-700">
                 <h4 className="text-white font-medium text-sm mb-3">Zoom</h4>
@@ -759,7 +752,7 @@ export default function DicomViewerPage() {
                   Reset View
                 </Button>
               </div>
-              
+
               {/* Window/Level Controls */}
               {dicomData && (
                 <div className="p-4 border-b border-gray-700">
@@ -783,7 +776,7 @@ export default function DicomViewerPage() {
                         className="flex-1 px-2 py-1 text-xs bg-gray-800 border border-gray-600 text-white rounded"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <div className="text-gray-400 text-xs mb-2">Presets:</div>
                       <div className="grid grid-cols-2 gap-1">
@@ -803,7 +796,7 @@ export default function DicomViewerPage() {
                   </div>
                 </div>
               )}
-              
+
               {/* Brightness/Contrast */}
               {dicomData && (
                 <div className="p-4 border-b border-gray-700">
@@ -826,7 +819,7 @@ export default function DicomViewerPage() {
                         className="w-full"
                       />
                     </div>
-                    
+
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
@@ -848,7 +841,7 @@ export default function DicomViewerPage() {
                   </div>
                 </div>
               )}
-              
+
               {/* Keyboard Shortcuts */}
               <div className="p-4">
                 <h4 className="text-white font-medium text-sm mb-3">Shortcuts</h4>
@@ -861,11 +854,11 @@ export default function DicomViewerPage() {
               </div>
             </div>
           ) : (
-            <div className="overflow-y-auto h-full" style={{ 
-                scrollbarWidth: 'thin', 
-                scrollbarColor: '#4B5563 #1F2937',
-                WebkitOverflowScrolling: 'touch'
-              }}>
+            <div className="overflow-y-auto h-full" style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#4B5563 #1F2937',
+              WebkitOverflowScrolling: 'touch'
+            }}>
               <div className="p-4 text-center text-gray-500">
                 <Settings className="w-8 h-8 mx-auto mb-2" />
                 <p className="text-sm">Select a DICOM file to access settings</p>

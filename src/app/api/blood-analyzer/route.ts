@@ -286,7 +286,7 @@ export async function POST(req: NextRequest) {
     console.log("🔄 Calling Gemini 3.0 Flash API...");
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-exp', // ✅ Using Gemini 2.0 Flash as per documentation recommendation
+      model: 'gemini-2.5-flash', // ✅ Using Gemini 2.0 Flash as per documentation recommendation
       contents: contentParts,
       config: {
         temperature: 0.1,

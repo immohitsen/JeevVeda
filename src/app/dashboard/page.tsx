@@ -244,7 +244,7 @@ export default function Dashboard() {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="min-h-screen bg-slate-50/50 w-full max-w-[100vw] overflow-x-hidden"
+      className="h-full bg-slate-50/50 w-full max-w-[100vw] overflow-x-hidden min-h-0"
     >
       {/* Background Decor Removed - Moved to Layout for performance */}
 
@@ -510,7 +510,7 @@ export default function Dashboard() {
                 </Button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto scrollbar-thin">
                 <table className="w-full">
                   <thead className="bg-slate-50/50">
                     <tr>

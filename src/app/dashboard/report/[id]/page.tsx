@@ -54,7 +54,8 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
             ...data.report.reportData,
             _id: data.report._id,
             reportType: data.report.reportType,
-            createdAt: data.report.createdAt
+            createdAt: data.report.createdAt,
+            fileName: data.report.fileName
           } : data.report;
 
           // Ensure ID is passed through
@@ -139,15 +140,10 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       {/* Back button logic moved to viewers for better layout control */}
 
       {isBloodReport(reportData) ? (
-        <div className="p-4 md:p-8 overflow-y-auto h-full">
-          <div className="mb-6 flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => router.back()} className="text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </div>
-          <BloodReportViewer report={reportData} />
-        </div>
+        <BloodReportViewer
+          report={reportData}
+          onBack={() => router.back()}
+        />
       ) : isCancerReport(reportData) ? (
         <div className="p-4 md:p-8 overflow-y-auto h-full">
           <div className="mb-6 flex items-center gap-2">

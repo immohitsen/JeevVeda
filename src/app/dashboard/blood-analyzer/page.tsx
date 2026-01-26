@@ -578,17 +578,17 @@ export default function BloodAnalyzerPage() {
 
           {/* Action Buttons */}
           <div className="flex justify-center gap-4 pt-4 pb-8">
-            <button
+            {/* <button
               onClick={downloadReport}
               className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-900 font-medium transition-colors shadow-sm"
             >
               <Download className="w-4 h-4" />
               Download JSON
-            </button>
+            </button> */}
             {reportId && (
               <button
                 onClick={() => router.push(`/dashboard/report/${reportId}`)}
-                className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-900 font-medium transition-colors shadow-sm"
+                className="cursor-pointer flex items-center gap-2 px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-900 font-medium transition-colors shadow-sm"
               >
                 <FileText className="w-4 h-4" />
                 View Full Report
@@ -596,7 +596,7 @@ export default function BloodAnalyzerPage() {
             )}
             <button
               onClick={resetAnalyzer}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors shadow-sm"
+              className="cursor-pointer flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors shadow-sm"
             >
               Analyze New Report
             </button>
