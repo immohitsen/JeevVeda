@@ -1,0 +1,12 @@
+import { MetadataRoute } from 'next'
+
+export default function robots(): MetadataRoute.Robots {
+    return {
+        rules: {
+            userAgent: '*',
+            allow: ['/', '/login', '/signup'],
+            disallow: ['/dashboard/', '/api/', '/private/', '/.next/']
+        },
+        sitemap: 'https://jeevveda.com/sitemap.xml',
+    }
+}
