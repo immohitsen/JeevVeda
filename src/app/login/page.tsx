@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
@@ -23,30 +24,31 @@ export default function LoginPage() {
     email: "",
     password: ""
   }); // Add field-specific errors
+  const [showPassword, setShowPassword] = useState(false);
 
   const onLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     try {
       setLoading(true);
       setError(""); // Clear previous errors
       setFieldErrors({ email: "", password: "" }); // Clear field errors
-      
+
       const response = await axios.post("/api/users/login", user);
       console.log("Login Success", response.data);
       toast.success("Login successful! Redirecting...");
       router.push("/dashboard");
-      
+
     } catch (error: unknown) {
       console.log("Login Failed", error);
-      
+
       // Handle different types of errors
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response: { data?: { error?: string }; status: number } };
         // Server responded with error status
         const errorMessage = axiosError.response.data?.error || "Login failed";
         const statusCode = axiosError.response.status;
-        
+
         // Handle specific error cases
         if (statusCode === 400) {
           if (errorMessage === "User does not exist") {
@@ -63,7 +65,7 @@ export default function LoginPage() {
         } else {
           setError(errorMessage);
         }
-        
+
         toast.error(errorMessage);
       } else if (error && typeof error === 'object' && 'request' in error) {
         // Network error
@@ -151,18 +153,27 @@ export default function LoginPage() {
 
             <LabelInputContainer className="mb-4">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                placeholder="••••••••"
-                onChange={handlePasswordChange}
-                type="password"
-                required
-                className={cn(
-                  "placeholder:text-neutral-500 dark:placeholder:text-neutral-400",
-                  fieldErrors.password && "border-red-500 focus:border-red-500"
-                )}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  placeholder="••••••••"
+                  onChange={handlePasswordChange}
+                  type={showPassword ? "text" : "password"}
+                  required
+                  className={cn(
+                    "placeholder:text-neutral-500 dark:placeholder:text-neutral-400 pr-10",
+                    fieldErrors.password && "border-red-500 focus:border-red-500"
+                  )}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               {fieldErrors.password && (
                 <p className="text-sm text-red-600 mt-1">{fieldErrors.password}</p>
               )}

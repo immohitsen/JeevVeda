@@ -478,9 +478,9 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold text-slate-900">Recent Reports</h2>
-              <span className="px-2 py-0.5 rounded-full bg-slate-100 text-xs font-semibold text-slate-600">{recentReports.length}</span>
+              <span className="px-2 py-0.5 rounded-full bg-slate-200 text-xs font-semibold text-slate-600">{recentReports.length}</span>
             </div>
-            <Button variant="ghost" className="text-slate-500 hover:text-slate-900" onClick={() => router.push('/dashboard/report-history')}>
+            <Button variant="ghost" className="text-slate-500 hover:text-slate-900 cursor-pointer border border-slate-300" onClick={() => router.push('/dashboard/report-history')}>
               View All <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
