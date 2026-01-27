@@ -105,7 +105,6 @@ export function ExpandableSidebar({ onClose, onNavigate }: ExpandableSidebarProp
                           href={item.url}
                           onClick={() => {
                             if (onClose) onClose();
-                            if (onNavigate) onNavigate();
                           }}
                           className={cn(
                             "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 bg-white/10 text-white shadow-sm ring-1 ring-white/10 cursor-pointer",
