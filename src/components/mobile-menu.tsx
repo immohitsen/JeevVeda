@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from 'react'
-import { X, Home, MessageCircle, Scan, ActivitySquare, History, UserCircle } from 'lucide-react'
+import { X, Home, MessageSquareDiff, FileScan, HeartPulse, GalleryVerticalEnd } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'motion/react'
@@ -12,10 +12,10 @@ const navigationItems = [
     title: "Main Menu",
     items: [
       { icon: <Home className="h-5 w-5" />, label: "Dashboard", url: "/dashboard" },
-      { icon: <MessageCircle className="h-5 w-5" />, label: "Chatbot", url: "/dashboard/chatbot" },
-      { icon: <Scan className="h-5 w-5" />, label: "MRI Analyzer", url: "/dashboard/mri-analysis" },
-      { icon: <ActivitySquare className="h-5 w-5" />, label: "Blood Analyzer", url: "/dashboard/blood-analyzer" },
-      { icon: <History className="h-5 w-5" />, label: "Report History", url: "/dashboard/report-history" },
+      { icon: <MessageSquareDiff className="h-5 w-5" />, label: "Chatbot", url: "/dashboard/chatbot" },
+      { icon: <FileScan className="h-5 w-5" />, label: "MRI Analyzer", url: "/dashboard/mri-analysis" },
+      { icon: <HeartPulse className="h-5 w-5" />, label: "Blood Analyzer", url: "/dashboard/blood-analyzer" },
+      { icon: <GalleryVerticalEnd className="h-5 w-5" />, label: "Report History", url: "/dashboard/report-history" },
     ]
   }
 ]

@@ -82,7 +82,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div> */}
 
         {/* Add Button - Hidden on mobile */}
-        <Button variant="primary" size="sm" className="hidden sm:flex"
+        <Button variant="primary" size="md" className="hidden sm:flex cursor-pointer hover:bg-neutral-800 hover:shadow-md"
           onClick={() => router.push('/dashboard/dicom-viewer')}>
           <span className="hidden lg:inline">DICOM Viewer</span>
         </Button>

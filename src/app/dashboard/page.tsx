@@ -8,9 +8,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import {
   FileScan,
   HeartPulse,
-  Scan,
   MessageSquareDiff,
   FileText,
+  GalleryVerticalEnd,
   Heart,
   Shield,
   Sparkles,
@@ -19,7 +19,9 @@ import {
   ArrowRight,
   MoreVertical,
   Eye,
-  Activity
+  Activity,
+  CalendarSync,
+  PersonStanding
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { motion, AnimatePresence, type Variants } from "motion/react"
@@ -149,7 +151,7 @@ export default function Dashboard() {
               fullId: report._id,
               type,
               rawType: report.reportType, // Added rawType for styling helpers
-              date: new Date(report.createdAt).toLocaleDateString(),
+              date: report.createdAt,
               status,
               riskLevel,
               icon,
@@ -212,7 +214,7 @@ export default function Dashboard() {
         wellnessColor,
         actionItems: actionCount,
         totalReports: totalReports, // Use the state variable directly
-        lastScreening: new Date(recentReports[0].date).toLocaleDateString(),
+        lastScreening: recentReports[0].date,
         riskLevel: recentReports[0].riskLevel
       })
     }
@@ -405,17 +407,21 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl group-hover:bg-slate-100 transition-colors">
-                  <HeartPulse className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                  <PersonStanding className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
                 </div>
               </div>
 
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow group">
                 <div>
                   <p className="text-sm text-slate-400 font-semibold uppercase tracking-wider mb-1">Last Screening</p>
-                  <p className="text-2xl font-bold text-slate-800">{healthMetrics.lastScreening}</p>
+                  <p className="text-2xl font-bold text-slate-800">
+                    {healthMetrics.lastScreening === "No data"
+                      ? "No data"
+                      : `${new Date(healthMetrics.lastScreening).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}, ${new Date(healthMetrics.lastScreening).getFullYear()}`}
+                  </p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl group-hover:bg-slate-100 transition-colors">
-                  <Clock className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                  <CalendarSync className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
                 </div>
               </div>
 
@@ -425,7 +431,7 @@ export default function Dashboard() {
                   <p className="text-2xl font-bold text-slate-800">{healthMetrics.totalReports}</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl group-hover:bg-slate-100 transition-colors">
-                  <FileText className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                  <GalleryVerticalEnd className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
                 </div>
               </div>
             </motion.div>
@@ -546,9 +552,9 @@ export default function Dashboard() {
                 </Button>
               </div>
             ) : (
-              <div className="flex flex-col min-h-0 relative overflow-hidden">
+              <div className="flex flex-col min-h-0 relative overflow-x-auto">
                 {/* Header - Fixed */}
-                <div className="grid grid-cols-[60px_1.5fr_1.5fr_80px] sm:grid-cols-[60px_1fr_1fr_1fr_80px] bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
+                <div className="grid grid-cols-[60px_1.5fr_1.5fr_80px] sm:grid-cols-[60px_1fr_1fr_1fr_80px] bg-slate-50 border-b border-slate-200 sticky top-0 z-10 min-w-[500px] pr-4">
                   <div className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Sr.</div>
                   <div className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Report ID</div>
                   <div className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</div>
@@ -557,7 +563,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Body */}
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-slate-100 min-w-[500px]">
                   <AnimatePresence>
                     {recentReports.map((report, i) => (
                       <motion.div
