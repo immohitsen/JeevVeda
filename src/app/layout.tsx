@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     siteName: 'Jeev Veda',
     images: [
       {
-        url: '/og-image.jpg',
+        url: '/og-image.jpg', // You should add an og-image.jpg to your public folder
         width: 1200,
         height: 630,
         alt: 'Jeev Veda',
