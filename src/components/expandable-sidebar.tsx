@@ -58,7 +58,7 @@ export function ExpandableSidebar({ onClose, onNavigate }: ExpandableSidebarProp
             >
               <button
                 onClick={() => setOpen(!open)}
-                className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-md transition-all duration-100"
+                className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-md transition-all duration-100 cursor-ew-resize"
               >
                 <motion.div
                   animate={{
@@ -69,7 +69,7 @@ export function ExpandableSidebar({ onClose, onNavigate }: ExpandableSidebarProp
                     ease: "easeInOut"
                   }}
                 >
-                  <PanelLeftClose className="w-5 h-5 text-slate-400 cursor-ew-resize" />
+                  <PanelLeftClose className="w-5 h-5 text-neutral-400" />
                 </motion.div>
               </button>
             </motion.div>
