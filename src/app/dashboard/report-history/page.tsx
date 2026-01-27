@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { FileText, Eye, Activity, Scan, Shield, Loader2, Search, Filter, ChevronLeft, ChevronRight, ArrowUpDown, MoreVertical, Trash2 } from "lucide-react"
+import { FileText, Eye, Activity, Scan, Shield, Loader2, Search, Filter, ChevronLeft, ChevronRight, ArrowUpDown, MoreVertical, Trash2, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 
 interface Report {
@@ -141,12 +142,63 @@ export default function ReportHistoryPage() {
             <p className="text-slate-500 text-sm mt-1">Manage and track your medical history</p>
           </div>
           <div>
-            <Button
-              onClick={() => router.push('/dashboard/blood-analyzer')}
-              className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-6 shadow-md shadow-blue-200"
-            >
-              + Add New Analysis
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-6 shadow-md shadow-blue-200 cursor-pointer"
+                >
+                  + Add New Analysis
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Start New Analysis</DialogTitle>
+                  <DialogDescription>
+                    Choose the type of analysis you want to perform.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid grid-cols-1 gap-4 py-4">
+                  <div
+                    onClick={() => router.push('/dashboard/chatbot')}
+                    className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 cursor-pointer transition-all group"
+                  >
+                    <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
+                      <MessageSquare className="h-6 w-6 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900">Health Chatbot</h3>
+                      <p className="text-sm text-slate-500">Get instant answers to your health questions</p>
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={() => router.push('/dashboard/mri-analysis')}
+                    className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-all group"
+                  >
+                    <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                      <Scan className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900">MRI Analysis</h3>
+                      <p className="text-sm text-slate-500">Upload and analyze MRI scans for insights</p>
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={() => router.push('/dashboard/blood-analyzer')}
+                    className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 hover:border-rose-500 hover:bg-rose-50 cursor-pointer transition-all group"
+                  >
+                    <div className="h-12 w-12 rounded-full bg-rose-100 flex items-center justify-center group-hover:bg-rose-200 transition-colors">
+                      <Activity className="h-6 w-6 text-rose-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900">Blood Analysis</h3>
+                      <p className="text-sm text-slate-500">Analyze blood test reports for health markers</p>
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
@@ -171,11 +223,11 @@ export default function ReportHistoryPage() {
       </div>
 
       {/* Scrollable Bottom Section: Filter & List */}
-      <div className="flex-1 overflow-y-auto p-6 min-h-0">
+      <div className="flex-1 flex flex-col min-h-0 px-6 pb-6">
 
         {/* Reports List Section */}
-        <div>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col h-full">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 shrink-0">
             <h2 className="text-xl font-bold text-slate-800">Reports List</h2>
 
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
@@ -204,95 +256,104 @@ export default function ReportHistoryPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden w-full max-w-full">
-            {loading ? (
-              <div className="p-12 text-center">
-                <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500 mb-3" />
-                <p className="text-slate-500 text-sm">Loading records...</p>
-              </div>
-            ) : filteredReports.length === 0 ? (
-              <div className="p-16 text-center">
-                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="w-5 h-5 text-slate-400" />
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm w-full max-w-full flex-1 flex flex-col min-h-0 relative overflow-hidden">
+            {/* Header - Fixed */}
+            <div className="grid grid-cols-[60px_1.5fr_1.5fr_80px] sm:grid-cols-[60px_1fr_1fr_1fr_80px] bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
+              <div className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Sr.</div>
+              <div className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Report ID</div>
+              <div className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</div>
+              <div className="hidden sm:block text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Date</div>
+              <div className="text-right py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Action</div>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto min-h-0">
+              {loading ? (
+                <div className="p-12 text-center">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500 mb-3" />
+                  <p className="text-slate-500 text-sm">Loading records...</p>
                 </div>
-                <h3 className="text-sm font-bold text-slate-800">No reports found</h3>
-                <p className="text-slate-400 text-xs mt-1">Try adjusting your search or filters.</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-slate-50/50">
-                    <tr>
-                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Report ID</th>
-                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</th>
-                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Date</th>
-                      <th className="text-right py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredReports.map((report) => (
-                      <tr
-                        key={report._id}
-                        className="group hover:bg-slate-50/80 transition-colors active:bg-slate-100"
-                      >
-                        {/* ID */}
-                        <td className="py-4 px-6">
-                          <span className="font-mono text-sm font-medium text-slate-700">
-                            #{report._id.slice(-6).toUpperCase()}
-                          </span>
-                        </td>
+              ) : filteredReports.length === 0 ? (
+                <div className="p-16 text-center">
+                  <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-5 h-5 text-slate-400" />
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-800">No reports found</h3>
+                  <p className="text-slate-400 text-xs mt-1">Try adjusting your search or filters.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {filteredReports.map((report, index) => (
+                    <div
+                      key={report._id}
+                      className="grid grid-cols-[60px_1.5fr_1.5fr_80px] sm:grid-cols-[60px_1fr_1fr_1fr_80px] group hover:bg-slate-50/80 transition-colors active:bg-slate-100 items-center"
+                    >
+                      {/* Sr No */}
+                      <div className="py-4 px-6">
+                        <span className="text-sm text-slate-500 font-medium">
+                          {(pagination.currentPage - 1) * 20 + index + 1}.
+                        </span>
+                      </div>
 
-                        {/* Type Badge */}
-                        <td className="py-4 px-6">
-                          <span className={cn("inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border whitespace-nowrap", getTypeColor(report.reportType).replace('text-', 'border-').replace('bg-', 'bg-opacity-10 '))} >
-                            {getTypeName(report.reportType)}
-                          </span>
-                        </td>
+                      {/* ID */}
+                      <div className="py-4 px-6 truncate">
+                        <span className="font-mono text-sm font-medium text-slate-700">
+                          #{report._id.slice(-6).toUpperCase()}
+                        </span>
+                      </div>
 
-                        {/* Date */}
-                        <td className="py-4 px-6 hidden sm:table-cell">
-                          <p className="text-sm text-slate-600 whitespace-nowrap">{new Date(report.createdAt).toLocaleDateString()}</p>
-                        </td>
+                      {/* Type Badge */}
+                      <div className="py-4 px-6">
+                        <span className={cn("inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border whitespace-nowrap", getTypeColor(report.reportType).replace('text-', 'border-').replace('bg-', 'bg-opacity-10 '))} >
+                          {getTypeName(report.reportType)}
+                        </span>
+                      </div>
 
-                        {/* Actions */}
-                        <td className="py-4 px-6 text-right relative" onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu key={`menu-${report._id}-${reportToDelete}`} modal={false}>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="cursor-pointer h-8 w-8 p-0 hover:bg-slate-200 rounded-full">
-                                <span className="sr-only">Open menu</span>
-                                <MoreVertical className="h-4 w-4 text-slate-800" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => router.push(`/dashboard/report/${report._id}`)}
-                                className="cursor-pointer">
-                                <Eye className="mr-2 h-4 w-4" />
-                                <span>View Report</span>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onSelect={(e) => {
-                                  e.preventDefault()
-                                  initiateDelete(report._id)
-                                }}
-                                className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                <span>Delete</span>
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                      {/* Date */}
+                      <div className="py-4 px-6 hidden sm:block">
+                        <p className="text-sm text-slate-600 whitespace-nowrap">
+                          {new Date(report.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}, {new Date(report.createdAt).getFullYear()}
+                        </p>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="py-4 px-6 text-right relative flex justify-end" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu key={`menu-${report._id}-${reportToDelete}`} modal={false}>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="cursor-pointer h-8 w-8 p-0 hover:bg-slate-200 rounded-full">
+                              <span className="sr-only">Open menu</span>
+                              <MoreVertical className="h-4 w-4 text-slate-800" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => router.push(`/dashboard/report/${report._id}`)}
+                              className="cursor-pointer">
+                              <Eye className="mr-2 h-4 w-4" />
+                              <span>View Report</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={(e) => {
+                                e.preventDefault()
+                                initiateDelete(report._id)
+                              }}
+                              className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>Delete</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Pagination Footer */}
           {pagination.totalPages > 1 && (
-            <div className="flex justify-end items-center gap-4 mt-8">
+            <div className="flex justify-end items-center gap-4 mt-4 shrink-0">
               <span className="text-sm text-slate-500">
                 Page <span className="font-semibold text-slate-800">{pagination.currentPage}</span> of {pagination.totalPages}
               </span>
@@ -355,6 +416,6 @@ export default function ReportHistoryPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </div >
   )
 }

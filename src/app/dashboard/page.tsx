@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/professional-button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
-  Activity,
+  FileScan,
+  HeartPulse,
   Scan,
-  MessageSquare,
+  MessageSquareDiff,
   FileText,
   Heart,
   Shield,
@@ -17,7 +18,8 @@ import {
   Clock,
   ArrowRight,
   MoreVertical,
-  Eye
+  Eye,
+  Activity
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { motion, AnimatePresence, type Variants } from "motion/react"
@@ -116,27 +118,27 @@ export default function Dashboard() {
           // Transform reports for display
           const transformedReports = data.reports.map((report: ReportData) => {
             let type = ''
-            let icon = Activity
+            let icon = HeartPulse
             let status = 'Completed'
             let riskLevel = 'Unknown'
             let color = 'green'
 
             if (report.reportType === 'BLOOD_ANALYSIS') {
               type = 'Blood Analysis'
-              icon = Activity
+              icon = HeartPulse
               const risk = report.reportData?.cancerRiskAssessment?.overallRisk
               riskLevel = risk ? risk.charAt(0).toUpperCase() + risk.slice(1) : 'Unknown'
               color = risk === 'low' ? 'green' : risk === 'moderate' ? 'yellow' : 'red'
             } else if (report.reportType === 'MRI_SCAN') {
               type = 'MRI Scan'
-              icon = Scan
+              icon = FileScan
               const prediction = report.reportData?.prediction
               status = prediction === 'cancer' ? 'Review Required' : 'Normal'
               riskLevel = prediction === 'cancer' ? 'High' : 'Low'
               color = prediction === 'cancer' ? 'red' : 'green'
             } else if (report.reportType === 'RISK_ASSESSMENT') {
               type = 'Risk Assessment'
-              icon = Shield
+              icon = MessageSquareDiff
               const risk = report.reportData?.assessment?.riskCategory
               riskLevel = risk || 'Unknown'
               color = risk?.includes('Low') ? 'green' : risk?.includes('Moderate') ? 'yellow' : 'red'
@@ -403,7 +405,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl group-hover:bg-slate-100 transition-colors">
-                  <Activity className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                  <HeartPulse className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
                 </div>
               </div>
 
@@ -439,32 +441,66 @@ export default function Dashboard() {
             <div className="h-px flex-1 bg-slate-200"></div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { title: "Blood Analysis", icon: Activity, color: "red", url: "/dashboard/blood-analyzer", desc: "Upload reports" },
-              { title: "Screening Tools", icon: Scan, color: "blue", url: "/dashboard/screening-tools", desc: "Early detection" },
-              { title: "AI Assistant", icon: MessageSquare, color: "emerald", url: "/dashboard/chatbot", desc: "Get answers" },
-              { title: "Sample Report", icon: FileText, color: "violet", url: "/dashboard/report/mock", desc: "View MRI Demo" }
+              {
+                title: "Blood Analyzer",
+                icon: HeartPulse,
+                gradient: "from-rose-100 via-rose-50 to-white",
+                shadow: "shadow-rose-100",
+                iconBg: "bg-rose-500",
+                url: "/dashboard/blood-analyzer",
+                desc: "Analyze blood test reports for comprehensive health insights.",
+                bgIcon: <HeartPulse className="w-64 h-64 text-rose-500 opacity-[0.1]" />
+              },
+              {
+                title: "MRI Analyzer",
+                icon: FileScan,
+                gradient: "from-blue-100 via-blue-50 to-white",
+                shadow: "shadow-blue-100",
+                iconBg: "bg-blue-500",
+                url: "/dashboard/mri-analysis",
+                desc: "Upload MRI scans for AI-powered fast and accurate detection.",
+                bgIcon: <FileScan className="w-64 h-64 text-blue-500 opacity-[0.1]" />
+              },
+              {
+                title: "Symptom Checker",
+                icon: MessageSquareDiff,
+                gradient: "from-emerald-100 via-emerald-50 to-white",
+                shadow: "shadow-emerald-100",
+                iconBg: "bg-emerald-500",
+                url: "/dashboard/chatbot",
+                desc: "Chat with our AI assistant to understand your symptoms better.",
+                bgIcon: <MessageSquareDiff className="w-64 h-64 text-emerald-500 opacity-[0.1]" />
+              },
             ].map((action) => (
               <motion.button
                 key={action.title}
                 variants={itemVariants}
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => router.push(action.url)}
-                className="group relative flex flex-col items-center text-center p-6 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300"
+                className={cn(
+                  "cursor-pointer group relative overflow-hidden rounded-[32px] p-8 h-70 text-left transition-all duration-300 shadow-sm hover:shadow-md border border-slate-200 border-2",
+                  `bg-gradient-to-b ${action.gradient} ${action.shadow}`
+                )}
               >
-                <div className={cn(
-                  "w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110",
-                  `bg-${action.color}-50 text-${action.color}-500`
-                )}>
-                  <action.icon className="w-7 h-7" />
+                {/* Background Decoration */}
+                <div className="absolute -right-10 -top-10 transform rotate-12 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-700 ease-out">
+                  {action.bgIcon}
                 </div>
-                <h3 className="font-bold text-slate-900 mb-1">{action.title}</h3>
-                <p className="text-xs text-slate-500">{action.desc}</p>
 
-                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ArrowRight className="w-4 h-4 text-slate-300" />
+                {/* Content */}
+                <div className="relative z-10 flex flex-col h-full justify-between">
+                  <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg transform transition-transform ", action.iconBg)}>
+                    <action.icon className="w-8 h-8 text-white" />
+                  </div>
+
+                  <div>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-2">{action.title}</h3>
+                    <p className="text-slate-600 text-sm font-medium leading-relaxed max-w-[90%]">
+                      {action.desc}
+                    </p>
+                  </div>
                 </div>
               </motion.button>
             ))}
@@ -510,62 +546,77 @@ export default function Dashboard() {
                 </Button>
               </div>
             ) : (
-              <div className="overflow-x-auto scrollbar-thin">
-                <table className="w-full">
-                  <thead className="bg-slate-50/50">
-                    <tr>
-                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Report ID</th>
-                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</th>
-                      <th className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Date</th>
-                      <th className="text-right py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    <AnimatePresence>
-                      {recentReports.map((report, i) => (
-                        <motion.tr
-                          key={report.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.05 }}
-                          whileHover={{ backgroundColor: "rgba(248,250,252, 0.8)" }}
-                          onClick={() => router.push(`/dashboard/report/${report.fullId}`)}
-                          className="group cursor-pointer active:bg-slate-50"
-                        >
-                          <td className="py-4 px-6">
-                            <span className="font-mono text-sm font-medium text-slate-700">
-                              #{report.id}
-                            </span>
-                          </td>
-                          <td className="py-4 px-6">
-                            <span className={cn("inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border whitespace-nowrap", getTypeColor(report.rawType).replace('text-', 'border-').replace('bg-', 'bg-opacity-10 '))} >
-                              {getTypeName(report.rawType)}
-                            </span>
-                          </td>
-                          <td className="py-4 px-6 hidden sm:table-cell">
-                            <p className="text-sm text-slate-600 whitespace-nowrap">{report.date}</p>
-                          </td>
-                          <td className="py-4 px-6 text-right relative" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenu modal={false}>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-slate-200 rounded-full">
-                                  <span className="sr-only">Open menu</span>
-                                  <MoreVertical className="h-4 w-4 text-slate-800" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => router.push(`/dashboard/report/${report.fullId}`)}>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  <span>View Report</span>
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </AnimatePresence>
-                  </tbody>
-                </table>
+              <div className="flex flex-col min-h-0 relative overflow-hidden">
+                {/* Header - Fixed */}
+                <div className="grid grid-cols-[60px_1.5fr_1.5fr_80px] sm:grid-cols-[60px_1fr_1fr_1fr_80px] bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
+                  <div className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Sr.</div>
+                  <div className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Report ID</div>
+                  <div className="text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</div>
+                  <div className="hidden sm:block text-left py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Date</div>
+                  <div className="text-right py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Action</div>
+                </div>
+
+                {/* Body */}
+                <div className="divide-y divide-slate-100">
+                  <AnimatePresence>
+                    {recentReports.map((report, i) => (
+                      <motion.div
+                        key={report.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        // whileHover={{ backgroundColor: "rgba(248,250,252, 0.8)" }}
+                        className="hover:bg-slate-50/80 grid grid-cols-[60px_1.5fr_1.5fr_80px] sm:grid-cols-[60px_1fr_1fr_1fr_80px] group active:bg-slate-50 items-center"
+                      >
+                        {/* Sr No */}
+                        <div className="py-4 px-6">
+                          <span className="text-sm text-slate-500 font-medium">
+                            {i + 1}.
+                          </span>
+                        </div>
+
+                        {/* ID */}
+                        <div className="py-4 px-6 truncate">
+                          <span className="font-mono text-sm font-medium text-slate-700">
+                            #{report.id}
+                          </span>
+                        </div>
+
+                        {/* Type Badge */}
+                        <div className="py-4 px-6">
+                          <span className={cn("inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border whitespace-nowrap", getTypeColor(report.rawType).replace('text-', 'border-').replace('bg-', 'bg-opacity-10 '))} >
+                            {getTypeName(report.rawType)}
+                          </span>
+                        </div>
+
+                        {/* Date */}
+                        <div className="py-4 px-6 hidden sm:block">
+                          <p className="text-sm text-slate-600 whitespace-nowrap">
+                            {new Date(report.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}, {new Date(report.date).getFullYear()}
+                          </p>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="py-4 px-6 text-right relative flex justify-end" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu modal={false}>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-slate-200 rounded-full">
+                                <span className="sr-only">Open menu</span>
+                                <MoreVertical className="h-4 w-4 text-slate-800" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => router.push(`/dashboard/report/${report.fullId}`)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                <span>View Report</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
               </div>
             )}
           </motion.div>
