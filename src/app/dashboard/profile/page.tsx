@@ -195,10 +195,10 @@ export default function ProfilePage() {
               <Separator className="my-6 bg-slate-100" />
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                {/* <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                   <p className="text-xs text-slate-500 uppercase font-semibold">Blood Type</p>
                   <p className="text-lg font-bold text-slate-800">O+</p>
-                </div>
+                </div> */}
                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                   <p className="text-xs text-slate-500 uppercase font-semibold">Gender</p>
                   <p className="text-lg font-bold text-slate-800 capitalize">{user.gender}</p>
