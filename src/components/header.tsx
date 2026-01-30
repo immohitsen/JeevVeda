@@ -81,13 +81,6 @@ export function Header({ onMenuClick }: HeaderProps) {
           />
         </div> */}
 
-        {/* Add Button - Hidden on mobile */}
-        <Button variant="primary" size="md" className="hidden sm:flex cursor-pointer hover:bg-neutral-800 hover:shadow-md"
-          onClick={() => router.push('/dashboard/dicom-viewer')}>
-          <span className="hidden lg:inline">DICOM Viewer</span>
-        </Button>
-
-
         {/* User Profile */}
         <div className="relative" ref={dropdownRef}>
           <div className="flex items-center gap-3 pl-4 border-l border-neutral-200">

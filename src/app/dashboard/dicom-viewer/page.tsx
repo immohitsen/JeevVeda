@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef, useCallback } from "react"
-import { Upload, FileImage, X, ArrowLeft, ZoomIn, ZoomOut, Move, ChevronLeft, ChevronRight, Play, Pause, Ruler, Sun, Moon, Settings } from "lucide-react"
+import { Upload, FileImage, X, ArrowLeft, ZoomIn, ZoomOut, Move, ChevronLeft, ChevronRight, Play, Pause, Ruler, Sun, Moon, Settings, Menu, FolderOpen, ChevronUp, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { DicomParser, DicomImageData } from "@/lib/dicom"
@@ -27,9 +27,32 @@ export default function DicomViewerPage() {
   const [_measurements, setMeasurements] = useState<{ x: number; y: number }[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+
+  // Sidebar/Drawer states
+  const [showRightSidebar, setShowRightSidebar] = useState(true)
+  const [showFileDrawer, setShowFileDrawer] = useState(true) // Open by default
+
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const playbackRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      // On mobile, collapse right sidebar by default
+      if (window.innerWidth < 1024) {
+        setShowRightSidebar(false)
+      } else {
+        setShowRightSidebar(true)
+      }
+    }
+
+    // Initial check
+    handleResize()
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -88,13 +111,16 @@ export default function DicomViewerPage() {
         setZoom(1)
         setPan({ x: 0, y: 0 })
         setCurrentFrame(0)
-        // Set default window/level values (professional medical settings)
         setWindowCenter(imageData.windowCenter || 517)
         setWindowWidth(imageData.windowWidth || 1102)
         setBrightness(0)
         setContrast(1)
         setMeasurements([])
-        console.log('Measurements cleared:', _measurements.length)
+
+        // Auto-close drawer on mobile when file is loaded to show image
+        if (window.innerWidth < 1024) {
+          setShowFileDrawer(false)
+        }
       } else {
         setError('Failed to parse DICOM file')
       }
@@ -114,9 +140,6 @@ export default function DicomViewerPage() {
     if (!dicomData || !canvasRef.current || currentFrame >= dicomData.numberOfFrames) return
 
     try {
-      console.log('Rendering frame:', currentFrame + 1, 'of', dicomData.numberOfFrames)
-
-      // Create a temporary canvas with custom window/level settings
       const tempCanvas = document.createElement('canvas')
       const tempCtx = tempCanvas.getContext('2d')
       if (!tempCtx) return
@@ -124,15 +147,11 @@ export default function DicomViewerPage() {
       tempCanvas.width = dicomData.width
       tempCanvas.height = dicomData.height
 
-      // Get frame data
       const frame = dicomData.frames[currentFrame]
       const pixelData = frame.pixelData
-
-      // Create image data with custom windowing
       const imageData = tempCtx.createImageData(dicomData.width, dicomData.height)
       const data = imageData.data
 
-      // Use custom window/level values if set
       const wc = windowCenter !== null ? windowCenter : (dicomData.windowCenter || 128)
       const ww = windowWidth !== null ? windowWidth : (dicomData.windowWidth || 256)
 
@@ -142,8 +161,6 @@ export default function DicomViewerPage() {
 
         for (let i = 0; i < pixelData.length && i < dicomData.width * dicomData.height; i++) {
           let pixelValue = pixelData[i]
-
-          // Apply windowing
           if (pixelValue <= windowMin) {
             pixelValue = 0
           } else if (pixelValue >= windowMax) {
@@ -151,40 +168,32 @@ export default function DicomViewerPage() {
           } else {
             pixelValue = Math.round(((pixelValue - windowMin) / ww) * 255)
           }
-
-          // Apply brightness and contrast
           pixelValue = Math.max(0, Math.min(255, pixelValue * contrast + brightness))
 
           const canvasIndex = i * 4
-          data[canvasIndex] = pixelValue     // Red
-          data[canvasIndex + 1] = pixelValue // Green
-          data[canvasIndex + 2] = pixelValue // Blue
-          data[canvasIndex + 3] = 255        // Alpha
+          data[canvasIndex] = pixelValue
+          data[canvasIndex + 1] = pixelValue
+          data[canvasIndex + 2] = pixelValue
+          data[canvasIndex + 3] = 255
         }
       } else {
         for (let i = 0; i < pixelData.length && i < dicomData.width * dicomData.height; i++) {
           let pixelValue = pixelData[i]
-          // Apply brightness and contrast
           pixelValue = Math.max(0, Math.min(255, pixelValue * contrast + brightness))
-
           const canvasIndex = i * 4
-          data[canvasIndex] = pixelValue     // Red
-          data[canvasIndex + 1] = pixelValue // Green
-          data[canvasIndex + 2] = pixelValue // Blue
-          data[canvasIndex + 3] = 255        // Alpha
+          data[canvasIndex] = pixelValue
+          data[canvasIndex + 1] = pixelValue
+          data[canvasIndex + 2] = pixelValue
+          data[canvasIndex + 3] = 255
         }
       }
 
       tempCtx.putImageData(imageData, 0, 0)
 
-      // Draw to main canvas
       const ctx = canvasRef.current.getContext('2d')
       if (ctx) {
-        // Set canvas dimensions to match image dimensions
         canvasRef.current.width = dicomData.width
         canvasRef.current.height = dicomData.height
-
-        // Disable image smoothing for sharper medical images
         ctx.imageSmoothingEnabled = false
         ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
         ctx.drawImage(tempCanvas, 0, 0)
@@ -196,24 +205,19 @@ export default function DicomViewerPage() {
   }, [dicomData, currentFrame, windowCenter, windowWidth, brightness, contrast])
 
   const nextFrame = useCallback(() => {
-    if (dicomData && currentFrame < dicomData.numberOfFrames - 1) {
-      const newFrame = currentFrame + 1
-      console.log('Next frame:', newFrame)
-      setCurrentFrame(newFrame)
+    if (dicomData) {
+      // Fix: Ensure we don't go past the last frame
+      setCurrentFrame(prev => Math.min(prev + 1, dicomData.numberOfFrames - 1))
     }
-  }, [dicomData, currentFrame])
+  }, [dicomData])
 
   const prevFrame = useCallback(() => {
-    if (currentFrame > 0) {
-      const newFrame = currentFrame - 1
-      console.log('Previous frame:', newFrame)
-      setCurrentFrame(newFrame)
-    }
-  }, [currentFrame])
+    // Fix: Ensure we don't go below 0
+    setCurrentFrame(prev => Math.max(0, prev - 1))
+  }, [])
 
   const goToFrame = (frameIndex: number) => {
     if (dicomData && frameIndex >= 0 && frameIndex < dicomData.numberOfFrames) {
-      console.log('Go to frame:', frameIndex)
       setCurrentFrame(frameIndex)
     }
   }
@@ -223,7 +227,6 @@ export default function DicomViewerPage() {
   }, [isPlaying])
 
   const resetView = useCallback(() => {
-    // Set a slight upward offset to position the image higher
     setPan({ x: 0, y: 40 })
     setBrightness(0)
     setContrast(1)
@@ -233,9 +236,8 @@ export default function DicomViewerPage() {
     }
     if (containerRef.current && dicomData) {
       const containerRect = containerRef.current.getBoundingClientRect()
-      // Calculate available space accounting for padding and potential overlays
-      const availableWidth = containerRect.width - 80
-      const availableHeight = containerRect.height - 80
+      const availableWidth = containerRect.width - 40
+      const availableHeight = containerRect.height - 40
 
       const fit = DicomParser.fitImageToContainer(
         dicomData.width,
@@ -244,14 +246,12 @@ export default function DicomViewerPage() {
         availableHeight
       )
 
-      // Apply the calculated scale to ensure image fits properly
-      setZoom(fit.scale * 0.95) // Slightly smaller to ensure full visibility
+      setZoom(fit.scale * 0.95)
     } else {
       setZoom(1)
     }
   }, [dicomData])
 
-  // Window/Level presets for different scan types
   const windowPresets = {
     'Soft Tissue': { center: 50, width: 400 },
     'Lung': { center: -600, width: 1600 },
@@ -287,12 +287,12 @@ export default function DicomViewerPage() {
     setIsDragging(false)
   }
 
-  // Handle playback
   useEffect(() => {
     if (isPlaying && dicomData && dicomData.numberOfFrames > 1) {
       playbackRef.current = setInterval(() => {
         setCurrentFrame(prev => {
           const next = prev + 1
+          // Loop playback
           return next >= dicomData.numberOfFrames ? 0 : next
         })
       }, playbackSpeed)
@@ -310,14 +310,12 @@ export default function DicomViewerPage() {
     }
   }, [isPlaying, dicomData, playbackSpeed])
 
-  // Render frame when data or frame changes
   useEffect(() => {
     if (dicomData) {
       renderDicomFrame()
     }
   }, [dicomData, currentFrame, windowCenter, windowWidth, brightness, contrast, renderDicomFrame])
 
-  // Keyboard and mouse wheel navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!dicomData) return
@@ -346,21 +344,14 @@ export default function DicomViewerPage() {
     const handleWheel = (e: WheelEvent) => {
       if (!dicomData || dicomData.numberOfFrames <= 1) return
 
-      // Only handle wheel events if the target is within the DICOM viewer area
       const target = e.target as HTMLElement
       const canvas = canvasRef.current
       const container = containerRef.current
 
       if (canvas && container && (canvas.contains(target) || container.contains(target))) {
         e.preventDefault()
-
-        if (e.deltaY > 0) {
-          // Scroll down - next frame
-          nextFrame()
-        } else if (e.deltaY < 0) {
-          // Scroll up - previous frame
-          prevFrame()
-        }
+        if (e.deltaY > 0) nextFrame()
+        else if (e.deltaY < 0) prevFrame()
       }
     }
 
@@ -373,20 +364,13 @@ export default function DicomViewerPage() {
     }
   }, [dicomData, currentFrame, isPlaying, nextFrame, prevFrame, togglePlayback, resetView])
 
-  // Auto-fit image when loaded or when container size changes
   useEffect(() => {
     if (dicomData && containerRef.current) {
-      // Small delay to ensure container is fully rendered
       setTimeout(() => resetView(), 100)
-
-      // Add resize listener to handle window/container size changes
       const handleResize = () => {
         if (containerRef.current) resetView()
       }
-
-      // Initial fit might need a second attempt for better accuracy
       setTimeout(() => resetView(), 500)
-
       window.addEventListener('resize', handleResize)
       return () => {
         window.removeEventListener('resize', handleResize)
@@ -395,154 +379,158 @@ export default function DicomViewerPage() {
   }, [dicomData, resetView])
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col overflow-hidden">
-      {/* Compact Header */}
-      <div className="bg-gray-900 text-white px-4 py-2 flex items-center justify-between border-b border-gray-700">
+    <div className="flex flex-col h-[calc(100vh-6rem)] lg:h-[calc(100vh-2rem)] bg-black lg:rounded-xl overflow-hidden shadow-2xl lg:border border-gray-800 relative select-none">
+
+      {/* Top Header / Toolbar */}
+      <div className="bg-gray-950 text-white px-4 py-2 flex items-center justify-between border-b border-gray-800 z-30 relative shrink-0 h-14">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.back()}
-            className="text-white hover:bg-gray-800 p-1"
+            onClick={() => setShowFileDrawer(!showFileDrawer)}
+            className={`gap-2 transition-colors ${showFileDrawer ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white'}`}
           >
-            <ArrowLeft className="w-4 h-4" />
+            {showFileDrawer ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            <span className="font-medium text-sm">
+              {selectedFile ? selectedFile.name : 'Select File'}
+            </span>
           </Button>
-          <div className="flex items-center gap-2">
-            <FileImage className="w-5 h-5" />
-            <h1 className="text-lg font-bold">DICOM Viewer</h1>
-          </div>
         </div>
 
-        <div className="flex items-center gap-3 text-xs">
-          <div className="text-gray-300">{uploadedFiles.length} files</div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500 hidden sm:inline">{uploadedFiles.length} file(s)</span>
+          <Button variant="ghost" size="sm" onClick={() => setShowRightSidebar(!showRightSidebar)} className="text-gray-400 hover:text-white">
+            <Settings className="w-5 h-5" />
+          </Button>
         </div>
       </div>
 
-      <div className="flex-1 flex">
-        {/* Left Sidebar - File List */}
-        <div className="w-64 bg-gray-900 border-r border-gray-700 flex flex-col">
-          <div className="p-4">
-            <h3 className="text-white font-medium mb-4">Files</h3>
-
-            {/* Upload Area */}
-            <div
-              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${dragActive
-                ? "border-blue-500 bg-blue-500/10"
-                : "border-gray-600 hover:border-gray-500"
-                }`}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-            >
-              <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-300 text-sm mb-2">
-                Drop DICOM files here
-              </p>
-              <p className="text-gray-500 text-xs mb-4">
-                or click to browse
-              </p>
-              <input
-                type="file"
-                multiple
-                accept=".dcm,.dicom"
-                onChange={handleFileInput}
-                className="hidden"
-                id="file-upload"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => document.getElementById('file-upload')?.click()}
-                className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
-              >
-                Browse Files
-              </Button>
-            </div>
-          </div>
-
-          {/* File List */}
-          <div className="flex-1 overflow-y-auto px-4 pb-4">
-            {uploadedFiles.map((file, index) => (
+      {/* Top Drawer - Content limited height */}
+      <div className={`
+         absolute top-0 left-0 right-0 z-40 bg-gray-950/95 backdrop-blur-md border-b border-gray-800 transition-all duration-300 ease-in-out shadow-2xl
+         ${showFileDrawer ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}
+      `} style={{ maxHeight: '60vh', display: 'flex', flexDirection: 'column' }}>
+        <div className="p-4 overflow-y-auto custom-scrollbar flex-1">
+          {/* Upload Area - COMPACT */}
+          <div className="grid gap-3">
+            {!selectedFile && uploadedFiles.length === 0 && (
               <div
-                key={index}
-                className={`flex items-center justify-between p-3 rounded-lg mb-2 cursor-pointer transition-colors ${selectedFile === file
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 hover:bg-gray-700 text-gray-200"
+                className={`border-2 border-dashed rounded-lg p-3 text-center transition-colors ${dragActive
+                  ? "border-blue-500 bg-blue-500/10"
+                  : "border-gray-800 hover:border-gray-700"
                   }`}
-                onClick={() => handleFileSelect(file)}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
               >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{file.name}</p>
-                  <p className="text-xs opacity-70">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                </div>
+                <Upload className="w-6 h-6 text-gray-500 mx-auto mb-1" />
+                <p className="text-gray-400 text-xs mb-2">Drop DICOM files</p>
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    removeFile(index)
-                  }}
-                  className="text-gray-400 hover:text-red-400 hover:bg-transparent p-1"
+                  onClick={() => document.getElementById('drawer-file-upload')?.click()}
+                  className="bg-gray-800 text-gray-200 hover:bg-gray-700 h-7 text-xs"
                 >
-                  <X className="w-4 h-4" />
+                  Browse Files
                 </Button>
               </div>
-            ))}
+            )}
+            <input
+              type="file"
+              multiple
+              accept=".dcm,.dicom"
+              onChange={handleFileInput}
+              className="hidden"
+              id="drawer-file-upload"
+            />
+
+            {/* File List Horizontal/Grid */}
+            {uploadedFiles.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Uploaded Files</h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs text-blue-400 hover:text-blue-300 px-2"
+                    onClick={() => document.getElementById('drawer-file-upload')?.click()}
+                  >
+                    + Add File
+                  </Button>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  {uploadedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer border transition-all ${selectedFile === file
+                        ? "border-blue-500/50 bg-blue-500/10 text-white"
+                        : "border-gray-800 bg-gray-900/50 hover:bg-gray-800 text-gray-300"
+                        }`}
+                      onClick={() => handleFileSelect(file)}
+                    >
+                      <FileImage className={`w-4 h-4 shrink-0 ${selectedFile === file ? 'text-blue-400' : 'text-gray-500'}`} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{file.name}</p>
+                        <p className="text-[10px] opacity-60">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          removeFile(index)
+                        }}
+                        className="h-6 w-6 p-0 text-gray-500 hover:text-red-400 hover:bg-transparent"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
+        {/* Drag Handle to close */}
+        <div
+          className="h-5 w-full flex items-center justify-center cursor-pointer hover:bg-white/5 border-t border-gray-800 shrink-0"
+          onClick={() => setShowFileDrawer(false)}
+        >
+          <div className="w-10 h-1 bg-gray-700 rounded-full"></div>
+        </div>
+      </div>
 
-        {/* Main DICOM Viewer - Fullscreen */}
-        <div className="flex-1 bg-black relative overflow-hidden" ref={containerRef}>
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Main Canvas Area */}
+        <div className="flex-1 bg-black relative overflow-hidden flex flex-col" ref={containerRef}>
           <div className="absolute inset-0 flex items-center justify-center">
             {isLoading ? (
               <div className="text-center text-white">
                 <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p>Loading DICOM file...</p>
+                <p>Loading...</p>
               </div>
             ) : error ? (
-              <div className="text-center text-red-400">
-                <X className="w-16 h-16 mx-auto mb-4" />
-                <p className="text-lg mb-2">Error</p>
+              <div className="text-center text-red-400 p-4">
+                <X className="w-12 h-12 mx-auto mb-4" />
                 <p className="text-sm">{error}</p>
               </div>
             ) : dicomData ? (
-              <div
-                className="relative flex items-start justify-center w-full h-full"
-                style={{
-                  overflow: 'hidden',
-                  padding: '20px',
-                  paddingTop: '60px',
-                  paddingBottom: '60px'
-                }}
-              >
-                <div
-                  style={{
-                    transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
-                    transformOrigin: 'center center',
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    justifyContent: 'center',
-                    width: '100%',
-                    height: '100%',
-                    marginTop: '-80px'
-                  }}
-                >
+              <div className="relative flex items-center justify-center w-full h-full" style={{ overflow: 'hidden' }}>
+                <div style={{
+                  transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
+                  transformOrigin: 'center center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
                   <canvas
                     ref={canvasRef}
-                    className={`shadow-lg ${activeTool === 'pan' ? 'cursor-move' :
-                      activeTool === 'measure' ? 'cursor-crosshair' :
-                        'cursor-default'
-                      }`}
+                    className={`shadow-lg ${activeTool === 'pan' ? 'cursor-move' : activeTool === 'measure' ? 'cursor-crosshair' : 'cursor-default'}`}
                     style={{
                       imageRendering: 'pixelated',
                       maxWidth: '100%',
                       maxHeight: '100%',
-                      objectFit: 'contain',
-                      display: 'block',
-                      margin: 'auto'
                     }}
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
@@ -551,318 +539,125 @@ export default function DicomViewerPage() {
                   />
                 </div>
               </div>
-            ) : selectedFile ? (
-              <div className="text-center text-gray-400">
-                <FileImage className="w-16 h-16 mx-auto mb-4" />
-                <p className="text-lg">Processing...</p>
-              </div>
             ) : (
               <div className="text-center text-gray-500">
-                <FileImage className="w-16 h-16 mx-auto mb-4" />
-                <p className="text-lg">No file selected</p>
-                <p className="text-sm">Upload and select a DICOM file to view</p>
+                <FileImage className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                <p className="text-sm opacity-50">Select a DICOM file from top menu</p>
               </div>
             )}
 
-            {/* Frame Navigation Overlay */}
+            {/* Context Overlays (Frames, etc) */}
             {dicomData && dicomData.numberOfFrames > 1 && (
-              <div className="absolute top-1/2 mt-50 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 px-4 py-2 rounded-lg flex items-center gap-2 z-10 border border-gray-800">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={prevFrame}
-                  disabled={currentFrame === 0}
-                  className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 disabled:opacity-50 p-1"
-                >
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/80 px-3 py-1 rounded-full flex items-center gap-4 z-10 border border-gray-800 backdrop-blur-sm">
+                <Button variant="ghost" size="icon" onClick={prevFrame} className="h-8 w-8 text-white hover:bg-white/10">
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-
-                <div className="flex items-center gap-2 px-2">
-                  <span className="w-10 text-white text-sm whitespace-nowrap">
-                    {currentFrame + 1} / {dicomData.numberOfFrames}
-                  </span>
+                <span className="text-white text-xs whitespace-nowrap">{currentFrame + 1} / {dicomData.numberOfFrames}</span>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="icon" onClick={togglePlayback} className="h-8 w-8 text-white hover:bg-white/10">
+                    {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  </Button>
                 </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={togglePlayback}
-                  className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 p-1"
-                >
-                  {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={nextFrame}
-                  disabled={currentFrame === dicomData.numberOfFrames - 1}
-                  className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 disabled:opacity-50 p-1"
-                >
+                <Button variant="ghost" size="icon" onClick={nextFrame} className="h-8 w-8 text-white hover:bg-white/10">
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
             )}
 
-            {/* Scroll Indicator */}
+            {/* Scroll Indicator (Vertical) */}
             {dicomData && dicomData.numberOfFrames > 1 && (
-              <div className="absolute right-1 top-1/3 mt-12 transform -translate-y-1/2 bg-black bg-opacity-75 rounded-lg p-2 z-10 flex flex-col items-center">
-                <div className="w-2 bg-gray-700 rounded-full" style={{ height: '200px' }}>
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 rounded-full py-2 px-1 z-10 hidden lg:flex flex-col items-center">
+                <div className="w-1 bg-gray-700 rounded-full h-32 relative">
                   <div
-                    className="w-full bg-blue-500 rounded-full transition-all duration-150"
+                    className="w-full bg-blue-500 rounded-full absolute transition-all duration-150"
                     style={{
-                      height: `${(currentFrame + 1) / dicomData.numberOfFrames * 100}%`
+                      height: `${(1 / dicomData.numberOfFrames) * 100}%`,
+                      top: `${(currentFrame / dicomData.numberOfFrames) * 100}%`
                     }}
                   ></div>
-                </div>
-                <div className="text-white text-xs text-center mt-2 w-20">
-                  {Math.round((currentFrame + 1) / dicomData.numberOfFrames * 100)}%
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Sidebar - Settings & Controls */}
-        <div className="w-80 bg-gray-900 border-l border-gray-700 flex flex-col h-full overflow-hidden" style={{ maxHeight: '81.5vh' }}>
+        {/* Right Sidebar - Tools */}
+        <div className={`
+             absolute inset-y-0 right-0 z-20 w-72 bg-gray-900 border-l border-gray-700 flex flex-col transition-transform duration-300 ease-in-out
+             lg:relative lg:translate-x-0
+             ${showRightSidebar ? 'translate-x-0' : 'translate-x-full shadow-none pointer-events-none opacity-0 lg:opacity-100 lg:pointer-events-auto'}
+        `}>
           {selectedFile ? (
-            <div className="overflow-y-auto h-full" style={{
-              scrollbarWidth: 'thin',
-              scrollbarColor: '#4B5563 #1F2937',
-              WebkitOverflowScrolling: 'touch'
-            }}>
-              {/* File Info */}
-              <div className="p-4 border-b border-gray-700">
-                <h3 className="text-white font-medium text-sm mb-2 truncate">{selectedFile.name}</h3>
-                {dicomData && (
-                  <div className="text-gray-400 text-xs space-y-1">
-                    <div>{dicomData.width} x {dicomData.height} pixels</div>
-                    {dicomData.numberOfFrames > 1 && <div>{dicomData.numberOfFrames} frames</div>}
-                    {dicomData.patientName && <div>Patient: {dicomData.patientName}</div>}
-                    {dicomData.studyDescription && <div>{dicomData.studyDescription}</div>}
-                  </div>
-                )}
-              </div>
-
-              {/* Frame Navigation */}
-              {dicomData && dicomData.numberOfFrames > 1 && (
-                <div className="p-4 border-b border-gray-700">
-                  <h4 className="text-white font-medium text-sm mb-3">Frame Navigation</h4>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={prevFrame}
-                      disabled={currentFrame === 0}
-                      className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 disabled:opacity-50 flex-1"
-                    >
-                      <ChevronLeft className="w-4 h-4 mr-1" />
-                      Prev
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={togglePlayback}
-                      className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
-                    >
-                      {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={nextFrame}
-                      disabled={currentFrame === dicomData.numberOfFrames - 1}
-                      className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 disabled:opacity-50 flex-1"
-                    >
-                      Next
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs text-gray-400">
-                      <span>Frame {currentFrame + 1} of {dicomData.numberOfFrames}</span>
-                      <span>{Math.round((currentFrame + 1) / dicomData.numberOfFrames * 100)}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max={dicomData.numberOfFrames - 1}
-                      value={currentFrame}
-                      onChange={(e) => goToFrame(parseInt(e.target.value))}
-                      className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Tools Section */}
-              <div className="p-4 border-b border-gray-700">
-                <h4 className="text-white font-medium text-sm mb-3">Tools</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant={activeTool === 'pan' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setActiveTool(activeTool === 'pan' ? 'none' : 'pan')}
-                    className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 justify-start"
-                  >
-                    <Move className="w-4 h-4 mr-2" />
-                    Pan
-                  </Button>
-                  <Button
-                    variant={activeTool === 'measure' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setActiveTool(activeTool === 'measure' ? 'none' : 'measure')}
-                    className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 justify-start"
-                  >
-                    <Ruler className="w-4 h-4 mr-2" />
-                    Measure
-                  </Button>
-                </div>
-              </div>
-
-              {/* Zoom Controls */}
-              <div className="p-4 border-b border-gray-700">
-                <h4 className="text-white font-medium text-sm mb-3">Zoom</h4>
-                <div className="flex items-center gap-2 mb-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setZoom(prev => Math.max(0.1, prev - 0.1))}
-                    className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 flex-1"
-                  >
-                    <ZoomOut className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setZoom(prev => Math.min(5, prev + 0.1))}
-                    className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 flex-1"
-                  >
-                    <ZoomIn className="w-4 h-4" />
-                  </Button>
-                </div>
-                <div className="text-center text-white text-sm mb-2">{Math.round(zoom * 100)}%</div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={resetView}
-                  className="w-full bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
-                >
-                  Reset View
+            <div className="flex flex-col h-full">
+              <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h3 className="text-white font-medium text-sm truncate w-40">{selectedFile.name}</h3>
+                <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setShowRightSidebar(false)}>
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
 
-              {/* Window/Level Controls */}
-              {dicomData && (
-                <div className="p-4 border-b border-gray-700">
-                  <h4 className="text-white font-medium text-sm mb-3">Window/Level</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <label className="text-gray-400 text-xs w-6">W:</label>
-                      <input
-                        type="number"
-                        value={windowWidth || 1102}
-                        onChange={(e) => setWindowWidth(parseInt(e.target.value))}
-                        className="flex-1 px-2 py-1 text-xs bg-gray-800 border border-gray-600 text-white rounded"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <label className="text-gray-400 text-xs w-6">L:</label>
-                      <input
-                        type="number"
-                        value={windowCenter || 517}
-                        onChange={(e) => setWindowCenter(parseInt(e.target.value))}
-                        className="flex-1 px-2 py-1 text-xs bg-gray-800 border border-gray-600 text-white rounded"
-                      />
-                    </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
+                {/* Tools */}
+                <div>
+                  <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Tools</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant={activeTool === 'pan' ? 'default' : 'outline'} size="sm" onClick={() => setActiveTool(activeTool === 'pan' ? 'none' : 'pan')} className="justify-start bg-gray-800 border-gray-600 hover:bg-gray-700 h-8 text-xs">
+                      <Move className="w-3 h-3 mr-2" /> Pan
+                    </Button>
+                    <Button variant={activeTool === 'measure' ? 'default' : 'outline'} size="sm" onClick={() => setActiveTool(activeTool === 'measure' ? 'none' : 'measure')} className="justify-start bg-gray-800 border-gray-600 hover:bg-gray-700 h-8 text-xs">
+                      <Ruler className="w-3 h-3 mr-2" /> Measure
+                    </Button>
+                  </div>
+                </div>
 
-                    <div className="space-y-2">
-                      <div className="text-gray-400 text-xs mb-2">Presets:</div>
-                      <div className="grid grid-cols-2 gap-1">
-                        {Object.keys(windowPresets).map((preset) => (
-                          <Button
-                            key={preset}
-                            variant="outline"
-                            size="sm"
-                            onClick={() => applyWindowPreset(preset as keyof typeof windowPresets)}
-                            className="text-xs bg-gray-800 border-gray-600 text-white hover:bg-gray-700 px-1 py-1"
-                          >
+                {/* Zoom */}
+                <div>
+                  <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Zoom</h4>
+                  <div className="flex gap-2 mb-2">
+                    <Button variant="outline" size="sm" onClick={() => setZoom(z => Math.max(0.1, z - 0.1))} className="flex-1 bg-gray-800 border-gray-600 h-8"><ZoomOut className="w-3 h-3" /></Button>
+                    <div className="flex items-center justify-center bg-gray-800 rounded px-3 min-w-[3rem] text-sm text-white">{Math.round(zoom * 100)}%</div>
+                    <Button variant="outline" size="sm" onClick={() => setZoom(z => Math.min(5, z + 0.1))} className="flex-1 bg-gray-800 border-gray-600 h-8"><ZoomIn className="w-3 h-3" /></Button>
+                  </div>
+                  <Button variant="secondary" size="sm" onClick={resetView} className="w-full text-xs h-8">Reset View</Button>
+                </div>
+
+                {/* Image Adjustments */}
+                {dicomData && (
+                  <div>
+                    <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Display</h4>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-xs text-gray-400"><span>Width ({windowWidth})</span></div>
+                        <input type="range" min="1" max="3000" value={windowWidth || 1102} onChange={(e) => setWindowWidth(parseInt(e.target.value))} className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-xs text-gray-400"><span>Level ({windowCenter})</span></div>
+                        <input type="range" min="-1000" max="1000" value={windowCenter || 517} onChange={(e) => setWindowCenter(parseInt(e.target.value))} className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-xs text-gray-400"><div className="flex items-center gap-1"><Sun className="w-3 h-3" /> Brightness</div></div>
+                        <input type="range" min="-100" max="100" value={brightness} onChange={(e) => setBrightness(parseInt(e.target.value))} className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-xs text-gray-400"><div className="flex items-center gap-1"><Moon className="w-3 h-3" /> Contrast</div></div>
+                        <input type="range" min="0.1" max="3" step="0.1" value={contrast} onChange={(e) => setContrast(parseFloat(e.target.value))} className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-1 pt-2">
+                        {Object.keys(windowPresets).slice(0, 4).map((preset) => (
+                          <Button key={preset} variant="outline" size="sm" onClick={() => applyWindowPreset(preset as any)} className="text-[10px] h-6 bg-gray-800 border-gray-600">
                             {preset}
                           </Button>
                         ))}
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* Brightness/Contrast */}
-              {dicomData && (
-                <div className="p-4 border-b border-gray-700">
-                  <h4 className="text-white font-medium text-sm mb-3">Display</h4>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Sun className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-400 text-xs">Brightness</span>
-                        </div>
-                        <span className="text-gray-400 text-xs">{brightness}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="-100"
-                        max="100"
-                        value={brightness}
-                        onChange={(e) => setBrightness(parseInt(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Moon className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-400 text-xs">Contrast</span>
-                        </div>
-                        <span className="text-gray-400 text-xs">{contrast.toFixed(1)}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="0.1"
-                        max="3"
-                        step="0.1"
-                        value={contrast}
-                        onChange={(e) => setContrast(parseFloat(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Keyboard Shortcuts */}
-              <div className="p-4">
-                <h4 className="text-white font-medium text-sm mb-3">Shortcuts</h4>
-                <div className="text-xs text-gray-400 space-y-1">
-                  <div>← → Navigate frames</div>
-                  <div>Space Play/Pause</div>
-                  <div>R Reset view</div>
-                  <div>Mouse wheel Scroll frames</div>
-                </div>
+                )}
               </div>
             </div>
           ) : (
-            <div className="overflow-y-auto h-full" style={{
-              scrollbarWidth: 'thin',
-              scrollbarColor: '#4B5563 #1F2937',
-              WebkitOverflowScrolling: 'touch'
-            }}>
-              <div className="p-4 text-center text-gray-500">
-                <Settings className="w-8 h-8 mx-auto mb-2" />
-                <p className="text-sm">Select a DICOM file to access settings</p>
-              </div>
+            <div className="h-full flex flex-col items-center justify-center text-gray-500 p-4 text-center">
+              <Settings className="w-8 h-8 mb-2 opacity-50" />
+              <p className="text-xs">Select a file to view properties</p>
             </div>
           )}
         </div>

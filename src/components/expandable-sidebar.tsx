@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, MessageSquareDiff, HeartPulse, GalleryVerticalEnd, FileScan, UserCircle, ChevronLeft, PanelLeftClose } from "lucide-react"
+import { Home, MessageSquareDiff, HeartPulse, GalleryVerticalEnd, FileScan, UserCircle, ChevronLeft, PanelLeftClose, Telescope } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -21,6 +21,12 @@ const navigationItems = [
       { icon: <FileScan className="h-5 w-5 flex-shrink-0" />, label: "MRI Analyzer", url: "/dashboard/mri-analysis" },
       { icon: <HeartPulse className="h-5 w-5 flex-shrink-0" />, label: "Blood Analyzer", url: "/dashboard/blood-analyzer" },
       { icon: <GalleryVerticalEnd className="h-5 w-5 flex-shrink-0" />, label: "Report History", url: "/dashboard/report-history" },
+    ]
+  },
+  {
+    title: "Tools",
+    items: [
+      { icon: <Telescope className="h-5 w-5 flex-shrink-0" />, label: "Dicom Viewer", url: "/dashboard/dicom-viewer" },
     ]
   }
 ];
