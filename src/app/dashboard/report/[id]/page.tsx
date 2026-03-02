@@ -135,6 +135,15 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     return data.reportType === 'RISK_ASSESSMENT';
   }
 
+  // LUNG_CANCER_SCAN, OSCC_SCAN and legacy MRI_SCAN all share the same
+  // prediction/confidence data shape → handled by MRIReportViewer
+  const isMriLikeReport = (data: AnyReportData): data is MRIReportData => {
+    return ['MRI_SCAN', 'LUNG_CANCER_SCAN', 'OSCC_SCAN'].includes(
+      String(data.reportType)
+    );
+  }
+
+
   return (
     <div className="h-screen w-full bg-gray-50/50 dark:bg-neutral-900/50 overflow-hidden flex flex-col">
       {/* Back button logic moved to viewers for better layout control */}
@@ -158,13 +167,28 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
             riskAssessment={(reportData as CancerReportData).risk_assessment}
           />
         </div>
-      ) : (
+      ) : isMriLikeReport(reportData) ? (
         <MRIReportViewer
           report={reportData as MRIReportData}
           patient={patientProps}
           onBack={() => router.back()}
+          reportType={String(reportData.reportType)}
         />
+
+      ) : (
+        // Unknown report type fallback
+        <div className="h-full w-full flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+          <div className="p-4 bg-yellow-50 text-yellow-500 rounded-full">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground">Unknown Report Type</h2>
+          <p className="text-muted-foreground">This report type is not supported yet.</p>
+          <Button onClick={() => router.back()} variant="outline">
+            <ArrowLeft className="w-4 h-4 mr-2" />Go Back
+          </Button>
+        </div>
       )}
     </div>
   );
 }
+

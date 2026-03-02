@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File
 
     // Forward the request to the actual API
-    const response = await fetch(`${process.env.FASTAPI}`, {
+    const response = await fetch(`${process.env.LUNG_FASTAPI}`, {
       method: 'POST',
       body: formData,
     })
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
         // Save report
         const report = new Report({
           userId,
-          reportType: 'MRI_SCAN',
+          reportType: 'LUNG_CANCER_SCAN',
           fileName: file.name,
           fileSize: file.size,
           reportData: data
@@ -40,10 +40,10 @@ export async function POST(request: NextRequest) {
 
         await report.save()
         reportId = report._id.toString()
-        console.log('MRI report saved:', reportId)
+        console.log('Lung cancer report saved:', reportId)
       }
     } catch (saveError) {
-      console.error('Failed to save MRI report:', saveError)
+      console.error('Failed to save Lung cancer report:', saveError)
       // Continue anyway - don't fail the prediction
     }
 

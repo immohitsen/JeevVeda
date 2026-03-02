@@ -1,7 +1,10 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Upload, Brain, AlertTriangle, CheckCircle, ArrowLeft, FileImage, X, Loader2, Eye, Shield } from "lucide-react"
+import {
+  Upload, Brain, AlertTriangle, CheckCircle, ArrowLeft,
+  FileImage, X, Loader2, Eye, Shield, Activity, Info
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -12,6 +15,9 @@ interface PredictionResult {
   reportId?: string
 }
 
+const isCancer = (result: PredictionResult) =>
+  result.prediction?.toLowerCase() === "cancer"
+
 export default function MRIAnalysisPage() {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -20,271 +26,297 @@ export default function MRIAnalysisPage() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<PredictionResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [dragOver, setDragOver] = useState(false)
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        setError('Please select a valid image file')
-        return
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        setError('File size must be less than 10MB')
-        return
-      }
-      setSelectedFile(file)
-      setError(null)
-      setResult(null)
-      const url = URL.createObjectURL(file)
-      setPreviewUrl(url)
+  const processFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setError("Please select a valid image file")
+      return
     }
+    if (file.size > 10 * 1024 * 1024) {
+      setError("File size must be less than 10MB")
+      return
+    }
+    setSelectedFile(file)
+    setError(null)
+    setResult(null)
+    setPreviewUrl(URL.createObjectURL(file))
   }
 
-  const handleDragOver = (event: React.DragEvent) => {
-    event.preventDefault()
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) processFile(file)
   }
 
-  const handleDrop = (event: React.DragEvent) => {
-    event.preventDefault()
-    const file = event.dataTransfer.files[0]
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        setError('Please select a valid image file')
-        return
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        setError('File size must be less than 10MB')
-        return
-      }
-      setSelectedFile(file)
-      setError(null)
-      setResult(null)
-      const url = URL.createObjectURL(file)
-      setPreviewUrl(url)
-    }
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+    const file = e.dataTransfer.files[0]
+    if (file) processFile(file)
   }
 
   const removeFile = () => {
     setSelectedFile(null)
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl)
-      setPreviewUrl(null)
-    }
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(null)
     setResult(null)
     setError(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
+    if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
   const analyzeImage = async () => {
     if (!selectedFile) return
     setLoading(true)
     setError(null)
-
     const formData = new FormData()
-    formData.append('file', selectedFile)
-
+    formData.append("file", selectedFile)
     try {
-      const res = await fetch("/api/mri-predict", {
-        method: "POST",
-        body: formData,
-      })
-
+      const res = await fetch("/api/mri-predict", { method: "POST", body: formData })
       if (!res.ok) {
-        const errorText = await res.text()
-        throw new Error(`HTTP error! status: ${res.status} - ${errorText}`)
+        const text = await res.text()
+        throw new Error(`HTTP ${res.status}: ${text}`)
       }
-
       const data: PredictionResult = await res.json()
       setResult(data)
-    } catch (error) {
-      console.error('Full error:', error)
-      if (error instanceof Error) {
-        setError(`Error: ${error.message}`)
-      } else {
-        setError("Error connecting to backend.")
-      }
+    } catch (err) {
+      if (err instanceof Error) setError(`Error: ${err.message}`)
+      else setError("Error connecting to backend.")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA] p-6 font-sans text-slate-900">
+    <div className="h-full flex flex-col p-4 font-sans text-slate-900 overflow-hidden">
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.back()}
-            className="h-10 w-10 rounded-full bg-white hover:bg-slate-50 border border-slate-200"
-          >
-            <ArrowLeft className="w-5 h-5 text-slate-600" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">MRI Analysis</h1>
-            <p className="text-slate-500 text-sm mt-0.5">AI-Powered Cancer Detection</p>
-          </div>
+      {/* ── Header ─────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 mb-4 shrink-0">
+        <Button
+          variant="ghost" size="icon"
+          onClick={() => router.back()}
+          className="h-8 w-8 rounded-full bg-white hover:bg-slate-100 border border-slate-200 shrink-0"
+        >
+          <ArrowLeft className="w-4 h-4 text-slate-600" />
+        </Button>
+        <div className="flex items-center gap-2 min-w-0">
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight whitespace-nowrap">MRI Analysis</h1>
+          <span className="px-2 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold rounded-full whitespace-nowrap">
+            AI-Powered
+          </span>
         </div>
+        <p className="text-slate-400 text-sm hidden sm:block whitespace-nowrap ml-1">
+          Cancer Detection from MRI Scans
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* ── Main grid ──────────────────────────────────────── */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[1fr_auto] gap-4 min-h-0">
 
-        {/* Left Column: Upload */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                <Upload className="w-5 h-5 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-800">Upload Scan</h3>
+        {/* 1 — Upload card: mobile order 1, desktop col 1-7 row 1 */}
+        <div className="order-1 lg:col-span-7 lg:row-start-1 bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col min-h-[280px] lg:min-h-0">
+          <div className="flex items-center gap-2 mb-4 shrink-0">
+            <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+              <Upload className="w-4 h-4 text-blue-600" />
             </div>
+            <h3 className="text-base font-bold text-slate-800">Upload MRI Scan</h3>
+          </div>
 
+          <div className="flex-1 min-h-0 flex flex-col">
             {!selectedFile ? (
               <div
-                onDragOver={handleDragOver}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+                onDragLeave={() => setDragOver(false)}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-slate-200 rounded-xl p-12 text-center hover:border-blue-400 hover:bg-slate-50/50 transition-all cursor-pointer group"
+                className={cn(
+                  "flex-1 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer group",
+                  dragOver
+                    ? "border-blue-400 bg-blue-50/60 scale-[1.01]"
+                    : "border-slate-200 hover:border-blue-400 hover:bg-slate-50/50"
+                )}
               >
-                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <FileImage className="w-8 h-8 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                <div className={cn(
+                  "w-14 h-14 rounded-full flex items-center justify-center mb-3 transition-all",
+                  dragOver ? "bg-blue-100 scale-110" : "bg-slate-50 group-hover:scale-110"
+                )}>
+                  <FileImage className={cn(
+                    "w-7 h-7 transition-colors",
+                    dragOver ? "text-blue-500" : "text-slate-400 group-hover:text-blue-500"
+                  )} />
                 </div>
-                <h4 className="text-lg font-semibold text-slate-700 mb-1">Click to upload or drag and drop</h4>
-                <p className="text-slate-400 text-sm mb-6">Supports JPG, PNG, DICOM (Max 10MB)</p>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6">
+                <p className="text-base font-semibold text-slate-700 mb-1">
+                  {dragOver ? "Drop image here" : "Click to upload or drag & drop"}
+                </p>
+                <p className="text-slate-400 text-xs mb-4">JPG, PNG, DICOM · Max 10MB</p>
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-5 text-sm">
                   Browse Files
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="relative bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <div className="flex-1 min-h-0 flex flex-col gap-3">
+                {/* Preview */}
+                <div className="relative bg-slate-50 rounded-xl border border-slate-200 flex-1 min-h-0 flex items-center justify-center overflow-hidden">
                   <button
                     onClick={removeFile}
-                    className="absolute top-3 right-3 p-1.5 bg-white rounded-full shadow-sm hover:bg-red-50 hover:text-red-600 transition-colors border border-slate-100"
+                    className="absolute top-2 right-2 z-10 p-1.5 bg-white rounded-full shadow-sm hover:bg-red-50 hover:text-red-600 transition-colors border border-slate-100"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3.5 h-3.5" />
                   </button>
-                  <div className="flex items-center gap-4">
-                    <div className="w-20 h-20 bg-white rounded-lg border border-slate-200 flex items-center justify-center overflow-hidden">
-                      {previewUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                      ) : (
-                        <FileImage className="w-8 h-8 text-slate-400" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-slate-800">{selectedFile.name}</p>
-                      <p className="text-sm text-slate-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
-                    </div>
-                  </div>
+                  {previewUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={previewUrl}
+                      alt="MRI scan preview"
+                      className="max-h-full max-w-full object-contain p-3"
+                    />
+                  )}
                 </div>
 
-                <Button
-                  onClick={analyzeImage}
-                  disabled={loading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 rounded-xl text-base shadow-sm shadow-blue-200 disabled:opacity-70"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin mr-2" /> Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <Brain className="w-5 h-5 mr-2" /> Start Analysis
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
-            {error && (
-              <div className="mt-4 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-700">
-                <AlertTriangle className="w-5 h-5 shrink-0" />
-                <span className="text-sm font-medium">{error}</span>
+                {/* File meta + Analyze button */}
+                <div className="shrink-0 flex items-center gap-3 px-3 py-2 bg-slate-50 rounded-xl border border-slate-100">
+                  <FileImage className="w-4 h-4 text-blue-500 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-800 text-xs truncate">{selectedFile.name}</p>
+                    <p className="text-[11px] text-slate-400">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </div>
+                  <Button
+                    onClick={analyzeImage}
+                    disabled={loading}
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 text-sm shrink-0 disabled:opacity-70"
+                  >
+                    {loading ? (
+                      <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />Analyzing…</>
+                    ) : (
+                      <><Brain className="w-3.5 h-3.5 mr-1.5" />Analyze</>
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Guidelines Panel (Static) */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-            <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-emerald-500" /> Scanning Guidelines
-            </h3>
-            <ul className="space-y-3">
-              {[
-                "Ensure the MRI image is clear and high-resolution.",
-                "Avoid images with glare or excessive noise.",
-                "Supported formats: .jpg, .png."
-              ].map((item, i) => (
-                <li key={i} className="flex items-start gap-3 text-sm text-slate-600">
-                  <div className="w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center text-xs font-bold text-slate-500 mt-0.5">{i + 1}</div>
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+
+          {error && (
+            <div className="mt-3 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-red-700 shrink-0">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span className="text-xs font-medium">{error}</span>
+            </div>
+          )}
+        </div>
+
+
+        {/* 2 — Results: mobile order 2, desktop col 8-12 row 1-2 */}
+        <div className="order-2 lg:col-start-8 lg:col-span-5 lg:row-start-1 lg:row-span-2 flex flex-col min-h-0">
+          {result ? (
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col h-full min-h-0">
+              {/* Result header */}
+              <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-100 shrink-0">
+                <div className={cn(
+                  "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
+                  isCancer(result) ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"
+                )}>
+                  {isCancer(result) ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-800">Analysis Result</h3>
+                  <p className="text-[11px] text-slate-400">MRI Cancer Classifier</p>
+                </div>
+              </div>
+
+              {/* Verdict banner */}
+              <div className={cn(
+                "p-4 rounded-xl border text-center mb-4 shrink-0",
+                isCancer(result) ? "bg-red-50/60 border-red-100" : "bg-emerald-50/60 border-emerald-100"
+              )}>
+                <p className="text-[10px] font-semibold uppercase tracking-widest mb-1 text-slate-400">Prediction</p>
+                <h2 className={cn("text-2xl font-extrabold tracking-tight mb-1", isCancer(result) ? "text-red-700" : "text-emerald-700")}>
+                  {isCancer(result) ? "Potential Abnormality" : "No Abnormality Detected"}
+                </h2>
+                <p className={cn("text-xs mb-3 font-medium", isCancer(result) ? "text-red-500" : "text-emerald-500")}>
+                  {isCancer(result) ? "Possible cancerous region detected" : "Scan appears normal"}
+                </p>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-full border shadow-sm">
+                  <Activity className="w-3 h-3 text-slate-400" />
+                  <span className="text-xs font-medium text-slate-600">Confidence</span>
+                  <span className="text-xs font-bold text-slate-900">{(result.confidence * 100).toFixed(1)}%</span>
+                </div>
+              </div>
+
+              {/* Confidence bar */}
+              <div className="mb-4 space-y-2 flex-1 min-h-0">
+                <p className="text-xs font-semibold text-slate-600">Confidence Level</p>
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="font-medium text-slate-600">Model certainty</span>
+                    <span className={cn("font-bold", isCancer(result) ? "text-red-700" : "text-emerald-700")}>
+                      {(result.confidence * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className={cn("h-full rounded-full transition-all duration-700 ease-out", isCancer(result) ? "bg-red-400" : "bg-emerald-400")}
+                      style={{ width: `${(result.confidence * 100).toFixed(1)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="space-y-2 shrink-0">
+                <Button
+                  onClick={() => result.reportId && router.push(`/dashboard/report/${result.reportId}`)}
+                  disabled={!result.reportId}
+                  variant="outline"
+                  className="w-full justify-start h-10 border-slate-200 text-slate-700 hover:bg-slate-50 text-sm"
+                >
+                  <Eye className="w-4 h-4 mr-2 text-slate-400" />View Full Report
+                </Button>
+                <Button onClick={removeFile} variant="ghost" className="w-full justify-start h-10 text-slate-400 hover:text-slate-700 text-sm">
+                  <Upload className="w-4 h-4 mr-2" />Analyze Another Scan
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex-1 flex flex-col items-center justify-center text-center min-h-[200px] lg:min-h-0">
+              <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                <Brain className="w-8 h-8 text-blue-200" />
+              </div>
+              <h3 className="text-base font-bold text-slate-800 mb-1">Ready for Analysis</h3>
+              <p className="text-slate-400 text-sm max-w-[200px]">Upload an MRI scan to generate a preliminary AI assessment.</p>
+            </div>
+          )}
+        </div>
+
+        {/* 3 — Info strip: mobile order 3 (last), desktop col 1-7 row 2 */}
+        <div className="order-3 lg:col-span-7 lg:row-start-2 grid grid-cols-1 sm:grid-cols-2 gap-4 self-end">
+          <div className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-slate-100">
+            <p className="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5 text-blue-500" />Scanning Guidelines
+            </p>
+            <ul className="space-y-1.5">
+              {["Ensure the MRI image is clear and high-resolution", "Avoid images with glare or excessive noise", "Supported formats: .jpg, .png"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2 text-[11px] text-slate-500">
+                  <span className="w-4 h-4 bg-blue-50 rounded-full flex items-center justify-center text-[10px] font-bold text-blue-600 shrink-0 mt-0.5">{i + 1}</span>
                   {item}
                 </li>
               ))}
             </ul>
           </div>
-        </div>
-
-        {/* Right Column: Results */}
-        <div className="lg:col-span-5 space-y-6">
-          {result ? (
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 h-full">
-              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-100">
-                <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", result.prediction.toLowerCase() === 'cancer' ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600')}>
-                  {result.prediction.toLowerCase() === 'cancer' ? <AlertTriangle className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
-                </div>
-                <h3 className="text-lg font-bold text-slate-800">Analysis Result</h3>
-              </div>
-
-              <div className={cn("p-6 rounded-xl border mb-6 text-center", result.prediction.toLowerCase() === 'cancer' ? 'bg-red-50/50 border-red-100' : 'bg-emerald-50/50 border-emerald-100')}>
-                <p className="text-sm font-semibold uppercase tracking-wider mb-2 text-slate-500">Prediction</p>
-                <h2 className={cn("text-3xl font-bold mb-4", result.prediction.toLowerCase() === 'cancer' ? 'text-red-700' : 'text-emerald-700')}>
-                  {result.prediction.toLowerCase() === 'cancer' ? 'Potential Abnormality' : 'No Abnormality Detected'}
-                </h2>
-                <div className="inline-flex items-center px-4 py-1.5 bg-white rounded-full border shadow-sm">
-                  <span className="text-sm font-medium text-slate-600">Confidence: </span>
-                  <span className="ml-2 text-sm font-bold text-slate-900">{(result.confidence).toFixed(1)}%</span>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {/* I'll download functionality later */}
-                {/* <Button variant="outline" className="w-full justify-start h-12 border-slate-200 text-slate-700 hover:bg-slate-50">
-                  <Download className="w-4 h-4 mr-3 text-slate-400" /> Download Report PDF
-                </Button> */}
-                <Button
-                  onClick={() => result.reportId && router.push(`/dashboard/report/${result.reportId}`)}
-                  disabled={!result.reportId}
-                  variant="outline"
-                  className="w-full justify-start h-12 border-slate-200 text-slate-700 hover:bg-slate-50"
-                >
-                  <Eye className="w-4 h-4 mr-3 text-slate-400" /> View Report
-                </Button>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-slate-100">
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Disclaimer: This AI analysis is a screening tool and not a substitute for professional medical diagnosis. Please consult a specialist for confirmation.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 h-full flex flex-col items-center justify-center text-center">
-              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
-                <Brain className="w-10 h-10 text-slate-300" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-800 mb-2">Ready for Analysis</h3>
-              <p className="text-slate-500 max-w-xs mx-auto">Upload an MRI scan to generate a preliminary AI assessment report.</p>
-            </div>
-          )}
+          <div className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-slate-100">
+            <p className="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5 text-blue-500" />About This Tool
+            </p>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              This AI model analyzes MRI scans to detect potential cancerous abnormalities.
+              Results are a preliminary screening aid — always consult a specialist for professional diagnosis.
+            </p>
+          </div>
         </div>
 
       </div>
     </div>
   )
 }
+

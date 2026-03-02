@@ -12,9 +12,10 @@ const reportSchema = new mongoose.Schema({
   // Report type
   reportType: {
     type: String,
-    enum: ['BLOOD_ANALYSIS', 'MRI_SCAN', 'RISK_ASSESSMENT'],
+    enum: ['BLOOD_ANALYSIS', 'LUNG_CANCER_SCAN', 'OSCC_SCAN', 'RISK_ASSESSMENT'],
     required: true
   },
+
 
   // File info (if uploaded)
   fileName: String,

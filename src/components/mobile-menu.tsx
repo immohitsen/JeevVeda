@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from 'react'
-import { X, Home, MessageSquareDiff, FileScan, HeartPulse, GalleryVerticalEnd, Telescope } from 'lucide-react'
+import { X, Home, MessageSquareDiff, FileScan, HeartPulse, GalleryVerticalEnd, Telescope, Microscope } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'motion/react'
@@ -14,6 +14,7 @@ const navigationItems = [
       { icon: <Home className="h-5 w-5" />, label: "Dashboard", url: "/dashboard" },
       { icon: <MessageSquareDiff className="h-5 w-5" />, label: "Chatbot", url: "/dashboard/chatbot" },
       { icon: <FileScan className="h-5 w-5" />, label: "MRI Analyzer", url: "/dashboard/mri-analysis" },
+      { icon: <Microscope className="h-5 w-5" />, label: "OSCC Analyzer", url: "/dashboard/oscc-analyzer" },
       { icon: <HeartPulse className="h-5 w-5" />, label: "Blood Analyzer", url: "/dashboard/blood-analyzer" },
       { icon: <GalleryVerticalEnd className="h-5 w-5" />, label: "Report History", url: "/dashboard/report-history" },
     ]

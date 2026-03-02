@@ -11,7 +11,9 @@ interface MRIReportViewerProps {
   report: MRIReportData;
   patient?: MRIReportData['patient'];
   onBack?: () => void;
+  reportType?: string;
 }
+
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return "N/A";
@@ -24,7 +26,13 @@ const formatDate = (dateString?: string) => {
   });
 };
 
-export function MRIReportViewer({ report: rawReport, patient, onBack }: MRIReportViewerProps) {
+export function MRIReportViewer({ report: rawReport, patient, onBack, reportType }: MRIReportViewerProps) {
+  const reportTitle = reportType === 'LUNG_CANCER_SCAN'
+    ? 'Lung Cancer Analysis Report'
+    : reportType === 'OSCC_SCAN'
+      ? 'OSCC Analysis Report'
+      : 'MRI Analysis Report';
+
   // Normalize the report data to handle FastAPI response format and inject patient data
   const report = useMemo(() => {
     const data = { ...rawReport };
@@ -44,23 +52,28 @@ export function MRIReportViewer({ report: rawReport, patient, onBack }: MRIRepor
     }
 
     if (!data.aiAnalysis && (data.prediction || data.confidence)) {
-      const isHighRisk = data.prediction?.toLowerCase() === "cancer" || data.prediction?.toLowerCase() === "tumor";
+      const isHighRisk = data.prediction?.toLowerCase() === "cancer"
+        || data.prediction?.toLowerCase() === "tumor"
+        || data.prediction?.toLowerCase() === "oscc";
+      // API returns confidence as 0–1, convert to 0–100 for display
+      const confidencePct = data.confidence ? Math.round((data.confidence as number) * 100) : 0;
       return {
         ...data,
         aiAnalysis: {
-          riskScore: data.confidence ? Math.round(data.confidence) : 0,
+          riskScore: confidencePct,
           riskLevel: isHighRisk ? "High" : "Low",
-          summary: `AI Analysis indicates a ${data.prediction || "Unknown"} classification with ${data.confidence?.toFixed(1)}% confidence.`,
+          summary: `AI Analysis indicates a ${data.prediction || "Unknown"} classification with ${confidencePct}% confidence.`,
           abnormalities: isHighRisk ? [
             {
               name: data.prediction || "Detected Anomaly",
               location: "Refer to Scan",
-              confidence: (data.confidence || 0) / 100
+              confidence: (data.confidence as number) || 0
             }
           ] : []
         }
       } as MRIReportData;
     }
+
     return data;
   }, [rawReport, patient]);
 
@@ -85,7 +98,7 @@ export function MRIReportViewer({ report: rawReport, patient, onBack }: MRIRepor
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neutral-800 to-neutral-500 dark:from-neutral-100 dark:to-neutral-400">
-              MRI Analysis Report
+              {reportTitle}
             </h1>
             <p className="text-muted-foreground text-sm mt-1 flex items-center gap-2">
               <FileText className="w-4 h-4" />
