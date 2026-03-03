@@ -3,6 +3,9 @@ import { connect } from '@/dbConfig/dbConfig'
 import Report from '@/models/reportModel'
 import jwt from 'jsonwebtoken'
 
+// Extend Vercel function timeout to 60s (handles HuggingFace cold starts)
+export const maxDuration = 60
+
 connect()
 
 export async function POST(request: NextRequest) {
@@ -10,11 +13,32 @@ export async function POST(request: NextRequest) {
         const formData = await request.formData()
         const file = formData.get('file') as File
 
+        if (!file) {
+            return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+        }
+
+        if (!process.env.OSCC_FASTAPI) {
+            console.error('OSCC_FASTAPI env variable is not set')
+            return NextResponse.json({ error: 'OSCC service URL not configured' }, { status: 500 })
+        }
+
+        // Rebuild FormData properly (avoids Content-Type boundary issues on Vercel)
+        const fileBlob = new Blob([await file.arrayBuffer()], { type: file.type })
+        const forwardForm = new FormData()
+        forwardForm.append('file', fileBlob, file.name)
+
         // Forward to HuggingFace OSCC FastAPI
-        const response = await fetch(`${process.env.OSCC_FASTAPI}`, {
+        console.log('Calling OSCC FastAPI:', process.env.OSCC_FASTAPI)
+        const response = await fetch(process.env.OSCC_FASTAPI, {
             method: 'POST',
-            body: formData,
+            body: forwardForm,
         })
+
+        if (!response.ok) {
+            const errText = await response.text()
+            console.error('OSCC FastAPI error:', response.status, errText)
+            return NextResponse.json({ error: `OSCC service error: ${response.status}` }, { status: 502 })
+        }
 
         const data = await response.json()
         console.log(data)
