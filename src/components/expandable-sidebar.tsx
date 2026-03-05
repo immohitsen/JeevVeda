@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, MessageSquareDiff, HeartPulse, GalleryVerticalEnd, FileScan, UserCircle, ChevronLeft, PanelLeftClose, Telescope, Microscope } from "lucide-react"
+import { Home, MessageSquareDiff, HeartPulse, GalleryVerticalEnd, FileScan, PanelLeftClose, Telescope, Microscope, LifeBuoy } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -28,6 +28,12 @@ const navigationItems = [
     title: "Tools",
     items: [
       { icon: <Telescope className="h-5 w-5 flex-shrink-0" />, label: "Dicom Viewer", url: "/dashboard/dicom-viewer" },
+    ]
+  },
+  {
+    title: "Support",
+    items: [
+      { icon: <LifeBuoy className="h-5 w-5 flex-shrink-0" />, label: "Help Desk", url: "/dashboard/helpdesk" },
     ]
   }
 ];
@@ -175,9 +181,16 @@ export function ExpandableSidebar({ onClose, onNavigate }: ExpandableSidebarProp
 
         {/* (Bottom) */}
         <div className="relative z-20 w-full">
-          <div className="border-t border-white/10 pt-4 mb-2 text-center text-white/50 text-sm transition-all duration-200 ease-in-out">
+          <motion.div
+            animate={{
+              opacity: open ? 1 : 0,
+              display: open ? "block" : "none",
+            }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="border-t border-white/10 pt-3 text-center text-white/30 text-[10px] whitespace-nowrap overflow-hidden"
+          >
             Jeev Veda © {new Date().getFullYear()}
-          </div>
+          </motion.div>
         </div>
       </SidebarBody>
     </Sidebar >

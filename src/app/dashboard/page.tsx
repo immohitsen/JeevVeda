@@ -21,7 +21,8 @@ import {
   Eye,
   Activity,
   CalendarSync,
-  PersonStanding
+  PersonStanding,
+  Microscope
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { motion, AnimatePresence, type Variants } from "motion/react"
@@ -447,7 +448,7 @@ export default function Dashboard() {
             <div className="h-px flex-1 bg-slate-200"></div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {[
               {
                 title: "Blood Analyzer",
@@ -460,14 +461,24 @@ export default function Dashboard() {
                 bgIcon: <HeartPulse className="w-64 h-64 text-rose-500 opacity-[0.1]" />
               },
               {
-                title: "MRI Analyzer",
+                title: "Lung MRI Analyzer",
                 icon: FileScan,
                 gradient: "from-blue-100 via-blue-50 to-white",
                 shadow: "shadow-blue-100",
                 iconBg: "bg-blue-500",
                 url: "/dashboard/mri-analysis",
-                desc: "Upload MRI scans for AI-powered fast and accurate detection.",
+                desc: "Analyze Lung MRI scans for early detection of lung cancer.",
                 bgIcon: <FileScan className="w-64 h-64 text-blue-500 opacity-[0.1]" />
+              },
+              {
+                title: "OSCC Analyzer",
+                icon: Microscope,
+                gradient: "from-emerald-100 via-emerald-50 to-white",
+                shadow: "shadow-emerald-100",
+                iconBg: "bg-emerald-500",
+                url: "/dashboard/oscc-analyzer",
+                desc: "Analyze epithelial cell images for early detection of OSCC.",
+                bgIcon: <Microscope className="w-64 h-64 text-emerald-500 opacity-[0.1]" />
               },
               {
                 title: "Symptom Checker",
@@ -476,7 +487,7 @@ export default function Dashboard() {
                 shadow: "shadow-emerald-100",
                 iconBg: "bg-emerald-500",
                 url: "/dashboard/chatbot",
-                desc: "Chat with our AI assistant to understand your symptoms better.",
+                desc: "Chat with our AI assistant to understand your symptoms.",
                 bgIcon: <MessageSquareDiff className="w-64 h-64 text-emerald-500 opacity-[0.1]" />
               },
             ].map((action) => (

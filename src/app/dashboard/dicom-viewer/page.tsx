@@ -379,7 +379,7 @@ export default function DicomViewerPage() {
   }, [dicomData, resetView])
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] lg:h-[calc(100vh-2rem)] bg-black lg:rounded-xl overflow-hidden shadow-2xl lg:border border-gray-800 relative select-none">
+    <div className="flex flex-col flex-1 min-h-0 bg-black overflow-hidden relative select-none">
 
       {/* Top Header / Toolbar */}
       <div className="bg-gray-950 text-white px-4 py-2 flex items-center justify-between border-b border-gray-800 z-30 relative shrink-0 h-14">
@@ -388,7 +388,7 @@ export default function DicomViewerPage() {
             variant="ghost"
             size="sm"
             onClick={() => setShowFileDrawer(!showFileDrawer)}
-            className={`gap-2 transition-colors ${showFileDrawer ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white'}`}
+            className={`gap-2 transition-colors ${showFileDrawer ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
           >
             {showFileDrawer ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             <span className="font-medium text-sm">
@@ -399,7 +399,7 @@ export default function DicomViewerPage() {
 
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 hidden sm:inline">{uploadedFiles.length} file(s)</span>
-          <Button variant="ghost" size="sm" onClick={() => setShowRightSidebar(!showRightSidebar)} className="text-gray-400 hover:text-white">
+          <Button variant="ghost" size="sm" onClick={() => setShowRightSidebar(!showRightSidebar)} className="text-gray-400 hover:text-white hover:bg-gray-800">
             <Settings className="w-5 h-5" />
           </Button>
         </div>
@@ -407,7 +407,7 @@ export default function DicomViewerPage() {
 
       {/* Top Drawer - Content limited height */}
       <div className={`
-         absolute top-0 left-0 right-0 z-40 bg-gray-950/95 backdrop-blur-md border-b border-gray-800 transition-all duration-300 ease-in-out shadow-2xl
+         absolute top-0 left-0 right-0 z-40 bg-[#07101a] backdrop-blur-md border-b border-gray-800 transition-all duration-300 ease-in-out shadow-2xl
          ${showFileDrawer ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}
       `} style={{ maxHeight: '60vh', display: 'flex', flexDirection: 'column' }}>
         <div className="p-4 overflow-y-auto custom-scrollbar flex-1">
@@ -453,7 +453,7 @@ export default function DicomViewerPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 text-xs text-blue-400 hover:text-blue-300 px-2"
+                    className="h-6 text-xs text-blue-400 hover:text-blue-300 px-2 hover:bg-gray-700 hover:text-white"
                     onClick={() => document.getElementById('drawer-file-upload')?.click()}
                   >
                     + Add File
@@ -599,12 +599,12 @@ export default function DicomViewerPage() {
               <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
                 {/* Tools */}
                 <div>
-                  <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Tools</h4>
+                  <h4 className="text-gray-300 text-xs font-semibold uppercase tracking-wider mb-2">Tools</h4>
                   <div className="grid grid-cols-2 gap-2">
-                    <Button variant={activeTool === 'pan' ? 'default' : 'outline'} size="sm" onClick={() => setActiveTool(activeTool === 'pan' ? 'none' : 'pan')} className="justify-start bg-gray-800 border-gray-600 hover:bg-gray-700 h-8 text-xs">
+                    <Button variant={activeTool === 'pan' ? 'default' : 'outline'} size="sm" onClick={() => setActiveTool(activeTool === 'pan' ? 'none' : 'pan')} className="justify-start bg-gray-700 border-gray-500 hover:bg-gray-600 text-gray-200 h-8 text-xs">
                       <Move className="w-3 h-3 mr-2" /> Pan
                     </Button>
-                    <Button variant={activeTool === 'measure' ? 'default' : 'outline'} size="sm" onClick={() => setActiveTool(activeTool === 'measure' ? 'none' : 'measure')} className="justify-start bg-gray-800 border-gray-600 hover:bg-gray-700 h-8 text-xs">
+                    <Button variant={activeTool === 'measure' ? 'default' : 'outline'} size="sm" onClick={() => setActiveTool(activeTool === 'measure' ? 'none' : 'measure')} className="justify-start bg-gray-700 border-gray-500 hover:bg-gray-600 text-gray-200 h-8 text-xs">
                       <Ruler className="w-3 h-3 mr-2" /> Measure
                     </Button>
                   </div>
@@ -612,19 +612,19 @@ export default function DicomViewerPage() {
 
                 {/* Zoom */}
                 <div>
-                  <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Zoom</h4>
+                  <h4 className="text-gray-300 text-xs font-semibold uppercase tracking-wider mb-2">Zoom</h4>
                   <div className="flex gap-2 mb-2">
-                    <Button variant="outline" size="sm" onClick={() => setZoom(z => Math.max(0.1, z - 0.1))} className="flex-1 bg-gray-800 border-gray-600 h-8"><ZoomOut className="w-3 h-3" /></Button>
-                    <div className="flex items-center justify-center bg-gray-800 rounded px-3 min-w-[3rem] text-sm text-white">{Math.round(zoom * 100)}%</div>
-                    <Button variant="outline" size="sm" onClick={() => setZoom(z => Math.min(5, z + 0.1))} className="flex-1 bg-gray-800 border-gray-600 h-8"><ZoomIn className="w-3 h-3" /></Button>
+                    <Button variant="outline" size="sm" onClick={() => setZoom(z => Math.max(0.1, z - 0.1))} className="flex-1 bg-gray-700 border-gray-500 hover:bg-gray-600 text-gray-200 h-8"><ZoomOut className="w-3 h-3" /></Button>
+                    <div className="flex items-center justify-center bg-gray-700 rounded px-3 min-w-[3rem] text-sm text-white">{Math.round(zoom * 100)}%</div>
+                    <Button variant="outline" size="sm" onClick={() => setZoom(z => Math.min(5, z + 0.1))} className="flex-1 bg-gray-700 border-gray-500 hover:bg-gray-600 text-gray-200 h-8"><ZoomIn className="w-3 h-3" /></Button>
                   </div>
-                  <Button variant="secondary" size="sm" onClick={resetView} className="w-full text-xs h-8">Reset View</Button>
+                  <Button variant="secondary" size="sm" onClick={resetView} className="w-full text-xs h-8 bg-gray-700 text-gray-200 hover:bg-gray-600 border border-gray-500">Reset View</Button>
                 </div>
 
                 {/* Image Adjustments */}
                 {dicomData && (
                   <div>
-                    <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Display</h4>
+                    <h4 className="text-gray-300 text-xs font-semibold uppercase tracking-wider mb-2">Display</h4>
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <div className="flex justify-between text-xs text-gray-400"><span>Width ({windowWidth})</span></div>
@@ -644,7 +644,7 @@ export default function DicomViewerPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-1 pt-2">
                         {Object.keys(windowPresets).slice(0, 4).map((preset) => (
-                          <Button key={preset} variant="outline" size="sm" onClick={() => applyWindowPreset(preset as any)} className="text-[10px] h-6 bg-gray-800 border-gray-600">
+                          <Button key={preset} variant="outline" size="sm" onClick={() => applyWindowPreset(preset as any)} className="text-[10px] h-7 bg-gray-700 border-gray-500 text-gray-200 hover:bg-gray-600">
                             {preset}
                           </Button>
                         ))}

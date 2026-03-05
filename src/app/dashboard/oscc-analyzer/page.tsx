@@ -278,12 +278,12 @@ export default function OSCCAnalyzerPage() {
                 {/* 3 — Info strip: mobile order 3 (last), desktop col 1-7 row 2 */}
                 <div className="order-3 lg:col-span-7 lg:row-start-2 grid grid-cols-1 sm:grid-cols-2 gap-4 self-end">
                     <div className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-slate-100">
-                        <p className="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+                        <p className="text-s font-bold text-slate-700 mb-2 flex items-center gap-1.5">
                             <Shield className="w-3.5 h-3.5 text-teal-500" />Imaging Guidelines
                         </p>
                         <ul className="space-y-1.5">
                             {["Well-lit, high-resolution oral cavity photo", "Clearly capture the lesion or suspicious area", "Avoid blurry images or heavy shadows"].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2 text-[11px] text-slate-500">
+                                <li key={i} className="flex items-start gap-2 text-sm text-slate-500">
                                     <span className="w-4 h-4 bg-teal-50 rounded-full flex items-center justify-center text-[10px] font-bold text-teal-600 shrink-0 mt-0.5">{i + 1}</span>
                                     {item}
                                 </li>
@@ -291,10 +291,10 @@ export default function OSCCAnalyzerPage() {
                         </ul>
                     </div>
                     <div className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-slate-100">
-                        <p className="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+                        <p className="text-s font-bold text-slate-700 mb-2 flex items-center gap-1.5">
                             <Info className="w-3.5 h-3.5 text-teal-500" />About OSCC
                         </p>
-                        <p className="text-[11px] text-slate-500 leading-relaxed">
+                        <p className="text-sm text-slate-500 leading-relaxed">
                             Oral Squamous Cell Carcinoma (OSCC) is one of the most common head &amp; neck cancers.
                             Early detection dramatically improves survival. This tool uses a deep-learning model for preliminary screening.
                         </p>

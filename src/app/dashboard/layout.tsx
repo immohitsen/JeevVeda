@@ -53,8 +53,7 @@ export default function DashboardLayout({
         <div className="flex-1 flex flex-col bg-slate-50 sm:rounded-3xl lg:overflow-hidden shadow-2xl relative min-h-[calc(100vh-2rem)] sm:min-h-0 w-full max-w-full">
 
 
-          {/* Header - Sticky on mobile, relative on desktop */}
-          <div className="z-20 bg-white border-b border-gray-100 sticky top-0 lg:relative">
+          <div className="z-20 sticky top-0 lg:relative">
             <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
           </div>
 

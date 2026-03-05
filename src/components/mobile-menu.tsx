@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from 'react'
-import { X, Home, MessageSquareDiff, FileScan, HeartPulse, GalleryVerticalEnd, Telescope, Microscope } from 'lucide-react'
+import { X, Home, MessageSquareDiff, FileScan, HeartPulse, GalleryVerticalEnd, Telescope, Microscope, LifeBuoy } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'motion/react'
@@ -23,6 +23,12 @@ const navigationItems = [
     title: "Tools",
     items: [
       { icon: <Telescope className="h-5 w-5 flex-shrink-0" />, label: "Dicom Viewer", url: "/dashboard/dicom-viewer" },
+    ]
+  },
+  {
+    title: "Support",
+    items: [
+      { icon: <LifeBuoy className="h-5 w-5 flex-shrink-0" />, label: "Help Desk", url: "/dashboard/helpdesk" },
     ]
   }
 ]
