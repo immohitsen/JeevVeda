@@ -2,6 +2,7 @@ import { connect } from "@/dbConfig/dbConfig";
 import User from "@/models/userModel";
 import { NextRequest, NextResponse } from "next/server";
 import bcryptjs from "bcryptjs";
+import { sendWelcomeEmail } from "@/lib/mailer";
 
 connect();
 
@@ -46,11 +47,20 @@ export async function POST(request: NextRequest) {
     const savedUser = await newUser.save();
     console.log("User registered:", savedUser);
 
+    //send welcome mail
+    try {
+      await sendWelcomeEmail(email, fullName);
+      console.log("Welcome email sent successfully! ", email);
+    } catch (err) {
+      console.log("Error sending welcome email", err)
+    }
+
     return NextResponse.json({
       message: "User registered successfully",
       success: true,
       savedUser
     });
+
 
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";

@@ -31,9 +31,12 @@ export default function SignupPage() {
       console.log("Signup Success", response.data);
       toast.success("Signup Success");
       router.push("/login");
-    } catch {
-      console.log("Signup Failed");
-      toast.error("Signup Failed");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.data?.error) {
+        toast.error(error.response.data.error);
+      } else {
+        toast.error("Signup failed. Please try again.");
+      }
     }
   };
 
