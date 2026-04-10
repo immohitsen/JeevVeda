@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, MessageSquareDiff, HeartPulse, GalleryVerticalEnd, FileScan, PanelLeftClose, Telescope, Microscope, LifeBuoy } from "lucide-react"
+import { Home, MessageSquareDiff, HeartPulse, GalleryVerticalEnd, FileScan, PanelLeftClose, Telescope, Microscope, LifeBuoy, Dna } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -21,6 +21,7 @@ const navigationItems = [
       { icon: <FileScan className="h-5 w-5 flex-shrink-0" />, label: "MRI Analyzer", url: "/dashboard/mri-analysis" },
       { icon: <Microscope className="h-5 w-5 flex-shrink-0" />, label: "OSCC Analyzer", url: "/dashboard/oscc-analyzer" },
       { icon: <HeartPulse className="h-5 w-5 flex-shrink-0" />, label: "Blood Analyzer", url: "/dashboard/blood-analyzer" },
+      { icon: <Dna className="h-5 w-5 flex-shrink-0" />, label: "RNA Analyzer", url: "https://huggingface.co/spaces/DeerAi001/CancerGeneAI" },
       { icon: <GalleryVerticalEnd className="h-5 w-5 flex-shrink-0" />, label: "Report History", url: "/dashboard/report-history" },
     ]
   },
