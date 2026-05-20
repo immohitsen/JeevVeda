@@ -129,6 +129,22 @@ This project is a **research / prototype** tool. It is not a regulated medical d
 
 ---
 
+## 🚀 Future Roadmap
+
+Planned enhancements for JeevVeda include:
+
+- Multi-modal AI fusion combining MRI, pathology, and blood biomarkers.
+- Real-time DICOM collaboration and annotation tools.
+- Federated learning support for privacy-preserving model training.
+- Deployment optimization for edge devices and low-resource hospitals.
+- Advanced explainability pipelines using Grad-CAM++ and attention visualization.
+- Secure patient report storage with encryption and audit logging.
+- Expanded support for additional cancer screening modalities.
+
+We welcome contributions from developers, researchers, and healthcare professionals interested in AI-driven medical diagnostics.
+
+---
+
 ## 🙌 How to Contribute
 
 1. Fork the repo
